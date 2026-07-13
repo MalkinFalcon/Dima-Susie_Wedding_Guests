@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1600" font-family="system-ui, -apple-system, &#39;Segoe UI&#39;, sans-serif">
+  <title>Wedding Reception — Seating Plan</title>
+  
+  <defs>
+    <linearGradient id="stageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7A2E3B"></stop>
+      <stop offset="100%" stop-color="#5C1F2A"></stop>
+    </linearGradient>
+    <linearGradient id="voidGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3A2C31"></stop>
+      <stop offset="100%" stop-color="#241B1F"></stop>
+    </linearGradient>
+    <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.1" fill="#DDD6CB"></circle>
+    </pattern>
+    <pattern id="herring" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#D8C3A3"></rect>
+      <path d="M0 10 L20 30 M0 30 L20 50 M0 -10 L20 10" stroke="#A98F6C" stroke-width="1.1" opacity="0.4"></path>
+      <path d="M20 30 L40 10 M20 50 L40 30 M20 10 L40 -10" stroke="#A98F6C" stroke-width="1.1" opacity="0.4"></path>
+      <path d="M0 0 L20 20 M0 20 L20 40 M0 40 L20 60 M0 -20 L20 0" stroke="#EBDCC2" stroke-width="1.1" opacity="0.5"></path>
+      <path d="M20 20 L40 0 M20 40 L40 20 M20 60 L40 40 M20 0 L40 -20" stroke="#EBDCC2" stroke-width="1.1" opacity="0.5"></path>
+    </pattern>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#43363A" flood-opacity="0.14"></feDropShadow>
+    </filter>
+    <filter id="zoneShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#43363A" flood-opacity="0.16"></feDropShadow>
+    </filter>
+  </defs>
+
+  
+  <rect x="0" y="0" width="1000" height="1600" fill="#3A2342"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="#F3F0EB"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="url(#dots)"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="none" stroke="#3A2342" stroke-width="3"></rect>
+  <rect x="21" y="21" width="958" height="1558" rx="20" fill="none" stroke="#3A2342" stroke-width="1" opacity="0.35"></rect>
+
+  
+  <g id="stage">
+    <rect x="311" y="45" width="388" height="7" rx="3" fill="#B08D4F"></rect>
+    <path d="M313 55 L697 55 Q705 55 705 63 L705 130 Q705 150 685 150 L325 150 Q305 150 305 130 L305 63 Q305 55 313 55 Z" fill="url(#stageGrad)" filter="url(#zoneShadow)"></path>
+    <text class="zonelabel" font-weight="600" text-anchor="middle" x="505" y="110" font-size="15" letter-spacing="5" fill="#F3E4D2">STAGE</text>
+    <line x1="461" y1="128" x2="549" y2="128" stroke="#B08D4F" stroke-width="1.6" opacity="0.7"></line>
+  </g>
+
+  
+  <g id="cakes-table">
+    <circle cx="150" cy="128" r="50" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" filter="url(#softShadow)"></circle>
+    <g id="cake-glyph" stroke="#7A2E3B" stroke-width="1.8" fill="none" stroke-linecap="round">
+      <rect x="136" y="120" width="28" height="12" rx="3"></rect>
+      <rect x="142" y="110" width="16" height="10" rx="2.5"></rect>
+      <circle cx="150" cy="105" r="2.6" fill="#7A2E3B" stroke="none"></circle>
+      <line x1="133" y1="136" x2="167" y2="136"></line>
+      <line x1="150" y1="136" x2="150" y2="143"></line>
+    </g>
+    <text class="zonelabel" font-weight="600" text-anchor="middle" x="150" y="205" font-size="12" letter-spacing="3.5" fill="#9A8D89">CAKES · SWEETS</text>
+  </g>
+
+  
+  <g id="dance-floor">
+    <rect x="296" y="177" width="423" height="722" rx="22" fill="url(#herring)" stroke="#A98F6C" stroke-width="1.6" filter="url(#zoneShadow)"></rect>
+    <rect x="310" y="191" width="395" height="694" rx="14" fill="none" stroke="#B08D4F" stroke-width="1.3" opacity="0.75"></rect>
+    <g transform="translate(507,510)" fill="none" stroke="#B08D4F">
+      <circle r="46" stroke-width="1.4" opacity="0.85"></circle>
+      <circle r="36" stroke-width="0.9" opacity="0.55"></circle>
+      <circle r="4.5" fill="#B08D4F" stroke="none" opacity="0.9"></circle>
+    </g>
+    <text class="zonelabel" font-weight="600" text-anchor="middle" x="507" y="600" font-size="14" letter-spacing="4" fill="#7C6848">DANCE FLOOR</text>
+  </g>
+
+  
+  <g id="void-stairs">
+    <rect x="40" y="1143" width="585" height="104" rx="18" fill="url(#voidGrad)" filter="url(#zoneShadow)"></rect>
+    <line x1="370" y1="1159" x2="370" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.55"></line>
+    <line x1="400" y1="1159" x2="400" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.49"></line>
+    <line x1="430" y1="1159" x2="430" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.43"></line>
+    <line x1="460" y1="1159" x2="460" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.37"></line>
+    <line x1="490" y1="1159" x2="490" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.31"></line>
+    <line x1="520" y1="1159" x2="520" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.25"></line>
+    <line x1="550" y1="1159" x2="550" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.19"></line>
+    <line x1="580" y1="1159" x2="580" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.13"></line>
+    <text class="zonelabel" font-weight="600" text-anchor="middle" x="185" y="1201" font-size="13" letter-spacing="4" fill="#D5C29B">VOID · STAIRS</text>
+  </g>
+
+  
+  <g id="table-12">
+    <circle id="table-12-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="154" cy="246" r="14"></circle>
+    <circle id="table-12-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="201.6" cy="260" r="14"></circle>
+    <circle id="table-12-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="234" cy="297.4" r="14"></circle>
+    <circle id="table-12-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="241.1" cy="346.5" r="14"></circle>
+    <circle id="table-12-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="220.5" cy="391.6" r="14"></circle>
+    <circle id="table-12-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="178.8" cy="418.4" r="14"></circle>
+    <circle id="table-12-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="129.2" cy="418.4" r="14"></circle>
+    <circle id="table-12-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="87.5" cy="391.6" r="14"></circle>
+    <circle id="table-12-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="66.9" cy="346.5" r="14"></circle>
+    <circle id="table-12-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="74" cy="297.4" r="14"></circle>
+    <circle id="table-12-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="106.4" cy="260" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="154" cy="334" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-12-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="154" y="343">12</text></g>
+  </g>
+  <g id="table-2">
+    <circle id="table-2-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="159" cy="472" r="14"></circle>
+    <circle id="table-2-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="204.6" cy="483.4" r="14"></circle>
+    <circle id="table-2-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="238" cy="514.5" r="14"></circle>
+    <circle id="table-2-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="250.2" cy="557" r="14"></circle>
+    <circle id="table-2-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="238" cy="599.5" r="14"></circle>
+    <circle id="table-2-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="204.6" cy="630.6" r="14"></circle>
+    <circle id="table-2-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="159" cy="642" r="14"></circle>
+    <circle id="table-2-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="113.4" cy="630.6" r="14"></circle>
+    <circle id="table-2-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="80" cy="599.5" r="14"></circle>
+    <circle id="table-2-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="67.8" cy="557" r="14"></circle>
+    <circle id="table-2-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="80" cy="514.5" r="14"></circle>
+    <circle id="table-2-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="113.4" cy="483.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="159" cy="557" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-2-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="159" y="566">2</text></g>
+  </g>
+  <g id="table-3">
+    <circle id="table-3-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="162" cy="697" r="14"></circle>
+    <circle id="table-3-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="205.5" cy="707.1" r="14"></circle>
+    <circle id="table-3-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="239" cy="735" r="14"></circle>
+    <circle id="table-3-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="254.9" cy="774.4" r="14"></circle>
+    <circle id="table-3-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="249.5" cy="816.2" r="14"></circle>
+    <circle id="table-3-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="224.1" cy="850.9" r="14"></circle>
+    <circle id="table-3-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="184.4" cy="870.4" r="14"></circle>
+    <circle id="table-3-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="139.6" cy="870.4" r="14"></circle>
+    <circle id="table-3-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="99.9" cy="850.9" r="14"></circle>
+    <circle id="table-3-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="74.5" cy="816.2" r="14"></circle>
+    <circle id="table-3-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="69.1" cy="774.4" r="14"></circle>
+    <circle id="table-3-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="735" r="14"></circle>
+    <circle id="table-3-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.5" cy="707.1" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="162" cy="785" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-3-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="162" y="794">3</text></g>
+  </g>
+  <g id="table-4">
+    <circle id="table-4-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="164" cy="931" r="14"></circle>
+    <circle id="table-4-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="209.6" cy="942.4" r="14"></circle>
+    <circle id="table-4-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="243" cy="973.5" r="14"></circle>
+    <circle id="table-4-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="255.2" cy="1016" r="14"></circle>
+    <circle id="table-4-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="243" cy="1058.5" r="14"></circle>
+    <circle id="table-4-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="209.6" cy="1089.6" r="14"></circle>
+    <circle id="table-4-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="164" cy="1101" r="14"></circle>
+    <circle id="table-4-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.4" cy="1089.6" r="14"></circle>
+    <circle id="table-4-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="1058.5" r="14"></circle>
+    <circle id="table-4-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="72.8" cy="1016" r="14"></circle>
+    <circle id="table-4-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="973.5" r="14"></circle>
+    <circle id="table-4-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.4" cy="942.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="164" cy="1016" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-4-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="164" y="1025">4</text></g>
+  </g>
+  <g id="table-5">
+    <circle id="table-5-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="396" cy="937" r="14"></circle>
+    <circle id="table-5-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="441.6" cy="948.4" r="14"></circle>
+    <circle id="table-5-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="475" cy="979.5" r="14"></circle>
+    <circle id="table-5-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="487.2" cy="1022" r="14"></circle>
+    <circle id="table-5-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="475" cy="1064.5" r="14"></circle>
+    <circle id="table-5-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="441.6" cy="1095.6" r="14"></circle>
+    <circle id="table-5-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="396" cy="1107" r="14"></circle>
+    <circle id="table-5-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="350.4" cy="1095.6" r="14"></circle>
+    <circle id="table-5-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="317" cy="1064.5" r="14"></circle>
+    <circle id="table-5-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="304.8" cy="1022" r="14"></circle>
+    <circle id="table-5-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="317" cy="979.5" r="14"></circle>
+    <circle id="table-5-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="350.4" cy="948.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="396" cy="1022" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-5-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="396" y="1031">5</text></g>
+  </g>
+  <g id="table-6">
+    <circle id="table-6-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="630" cy="940" r="14"></circle>
+    <circle id="table-6-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="681.7" cy="955.7" r="14"></circle>
+    <circle id="table-6-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="713.7" cy="996.7" r="14"></circle>
+    <circle id="table-6-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="713.7" cy="1047.3" r="14"></circle>
+    <circle id="table-6-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="681.7" cy="1088.3" r="14"></circle>
+    <circle id="table-6-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="630" cy="1104" r="14"></circle>
+    <circle id="table-6-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="578.3" cy="1088.3" r="14"></circle>
+    <circle id="table-6-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="546.3" cy="1047.3" r="14"></circle>
+    <circle id="table-6-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="546.3" cy="996.7" r="14"></circle>
+    <circle id="table-6-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="578.3" cy="955.7" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="630" cy="1022" rx="62" ry="60" filter="url(#softShadow)"></ellipse>
+    <g id="table-6-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="630" y="1031">6</text></g>
+  </g>
+  <g id="table-7">
+    <circle id="table-7-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="65" r="14"></circle>
+    <circle id="table-7-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="900" cy="78" r="14"></circle>
+    <circle id="table-7-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="932.8" cy="112.9" r="14"></circle>
+    <circle id="table-7-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="939.9" cy="158.7" r="14"></circle>
+    <circle id="table-7-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="919.1" cy="200.7" r="14"></circle>
+    <circle id="table-7-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="877" cy="225.7" r="14"></circle>
+    <circle id="table-7-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="827" cy="225.7" r="14"></circle>
+    <circle id="table-7-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="784.9" cy="200.7" r="14"></circle>
+    <circle id="table-7-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764.1" cy="158.7" r="14"></circle>
+    <circle id="table-7-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="771.2" cy="112.9" r="14"></circle>
+    <circle id="table-7-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="804" cy="78" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="147" rx="62" ry="60" filter="url(#softShadow)"></ellipse>
+    <g id="table-7-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="156">7</text></g>
+  </g>
+  <g id="table-8">
+    <circle id="table-8-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="285" r="14"></circle>
+    <circle id="table-8-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="905.6" cy="301.2" r="14"></circle>
+    <circle id="table-8-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="938.7" cy="343.7" r="14"></circle>
+    <circle id="table-8-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="938.7" cy="396.3" r="14"></circle>
+    <circle id="table-8-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="905.6" cy="438.8" r="14"></circle>
+    <circle id="table-8-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="455" r="14"></circle>
+    <circle id="table-8-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="798.4" cy="438.8" r="14"></circle>
+    <circle id="table-8-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="765.3" cy="396.3" r="14"></circle>
+    <circle id="table-8-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="765.3" cy="343.7" r="14"></circle>
+    <circle id="table-8-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="798.4" cy="301.2" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="370" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-8-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="379">8</text></g>
+  </g>
+  <g id="table-9">
+    <circle id="table-9-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="503" r="14"></circle>
+    <circle id="table-9-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="514.4" r="14"></circle>
+    <circle id="table-9-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="545.5" r="14"></circle>
+    <circle id="table-9-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="943.2" cy="588" r="14"></circle>
+    <circle id="table-9-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="630.5" r="14"></circle>
+    <circle id="table-9-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="661.6" r="14"></circle>
+    <circle id="table-9-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="673" r="14"></circle>
+    <circle id="table-9-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="661.6" r="14"></circle>
+    <circle id="table-9-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="630.5" r="14"></circle>
+    <circle id="table-9-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="760.8" cy="588" r="14"></circle>
+    <circle id="table-9-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="545.5" r="14"></circle>
+    <circle id="table-9-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="514.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="588" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-9-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="597">9</text></g>
+  </g>
+  <g id="table-10">
+    <circle id="table-10-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="721" r="14"></circle>
+    <circle id="table-10-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="895.5" cy="731.1" r="14"></circle>
+    <circle id="table-10-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="929" cy="759" r="14"></circle>
+    <circle id="table-10-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="944.9" cy="798.4" r="14"></circle>
+    <circle id="table-10-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="939.5" cy="840.2" r="14"></circle>
+    <circle id="table-10-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="914.1" cy="874.9" r="14"></circle>
+    <circle id="table-10-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="874.4" cy="894.4" r="14"></circle>
+    <circle id="table-10-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="829.6" cy="894.4" r="14"></circle>
+    <circle id="table-10-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="789.9" cy="874.9" r="14"></circle>
+    <circle id="table-10-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764.5" cy="840.2" r="14"></circle>
+    <circle id="table-10-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="759.1" cy="798.4" r="14"></circle>
+    <circle id="table-10-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="775" cy="759" r="14"></circle>
+    <circle id="table-10-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="808.5" cy="731.1" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="809" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-10-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="818">10</text></g>
+  </g>
+  <g id="table-11">
+    <circle id="table-11-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="945" r="14"></circle>
+    <circle id="table-11-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="956.4" r="14"></circle>
+    <circle id="table-11-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="987.5" r="14"></circle>
+    <circle id="table-11-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="943.2" cy="1030" r="14"></circle>
+    <circle id="table-11-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="1072.5" r="14"></circle>
+    <circle id="table-11-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="1103.6" r="14"></circle>
+    <circle id="table-11-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="1115" r="14"></circle>
+    <circle id="table-11-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="1103.6" r="14"></circle>
+    <circle id="table-11-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="1072.5" r="14"></circle>
+    <circle id="table-11-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="760.8" cy="1030" r="14"></circle>
+    <circle id="table-11-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="987.5" r="14"></circle>
+    <circle id="table-11-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="956.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="1030" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-11-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="1039">11</text></g>
+  </g>
+  <g id="table-13">
+    <circle id="table-13-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="1150" r="14"></circle>
+    <circle id="table-13-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="901" cy="1164.9" r="14"></circle>
+    <circle id="table-13-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="933.4" cy="1204.5" r="14"></circle>
+    <circle id="table-13-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1255.5" r="14"></circle>
+    <circle id="table-13-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1307.3" r="14"></circle>
+    <circle id="table-13-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1359.1" r="14"></circle>
+    <circle id="table-13-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1411" r="14"></circle>
+    <circle id="table-13-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1462.8" r="14"></circle>
+    <circle id="table-13-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="933.2" cy="1513.8" r="14"></circle>
+    <circle id="table-13-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="900.8" cy="1553.2" r="14"></circle>
+    <circle id="table-13-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="851.9" cy="1568" r="14"></circle>
+    <circle id="table-13-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="803" cy="1553.1" r="14"></circle>
+    <circle id="table-13-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="770.6" cy="1513.5" r="14"></circle>
+    <circle id="table-13-seat-14" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1462.6" r="14"></circle>
+    <circle id="table-13-seat-15" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1410.8" r="14"></circle>
+    <circle id="table-13-seat-16" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1358.9" r="14"></circle>
+    <circle id="table-13-seat-17" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1307.1" r="14"></circle>
+    <circle id="table-13-seat-18" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1255.2" r="14"></circle>
+    <circle id="table-13-seat-19" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="770.7" cy="1204.3" r="14"></circle>
+    <circle id="table-13-seat-20" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="803.1" cy="1164.8" r="14"></circle>
+    <rect class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" x="790" y="1176" width="124" height="366" rx="62" ry="62" filter="url(#softShadow)"></rect>
+    <g id="table-13-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="1368">13</text></g>
+  </g>
+</svg>

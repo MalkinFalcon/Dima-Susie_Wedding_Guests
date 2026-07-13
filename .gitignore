@@ -1,0 +1,5 @@
+# Excel lock files
+~$*.xlsx
+# OS junk
+Thumbs.db
+.DS_Store
