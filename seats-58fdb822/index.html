@@ -1,0 +1,2350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Dima &amp; Susie — Find Your Seat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#170c1f; --plum:#241233; --plum2:#341a48;
+    --claret:#5c1f2a; --burgundy:#7a2e3b; --rose:#c98b87;
+    --gold:#c9a557; --goldb:#f2d692; --goldd:#8f6f2e;
+    --cream:#f6ecd4; --ink:#2a1a10;
+    --seat:#f7efdd;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--void);}
+  body{
+    font-family:'Inter',system-ui,sans-serif;color:var(--cream);
+    position:fixed;inset:0;touch-action:none;
+    user-select:none;-webkit-user-select:none;
+  }
+  h1,h2,h3,.serif{font-family:'Cormorant Garamond',serif;}
+
+  /* ---------- layers ---------- */
+  #dust{position:fixed;inset:0;z-index:1;pointer-events:none;}
+  #stage-wrap{position:fixed;inset:0;z-index:2;overflow:hidden;}
+  #world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;}
+  #world svg{display:block;}
+
+  .vignette{position:fixed;inset:0;z-index:3;pointer-events:none;
+    background:radial-gradient(ellipse 75% 60% at 50% 45%, transparent 40%, rgba(10,4,16,.55) 88%, rgba(10,4,16,.9) 100%);
+    opacity:0;transition:opacity 1.2s ease;}
+  .vignette.on{opacity:1;}
+
+  /* ---------- title / search screen ---------- */
+  #search-screen{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-start;padding:min(9vh,70px) 22px 22px;
+    background:radial-gradient(ellipse 90% 55% at 50% 12%, rgba(90,40,70,.55), transparent 70%),
+      linear-gradient(180deg, var(--plum) 0%, var(--void) 70%);
+    transition:opacity .7s ease, transform .7s cubic-bezier(.7,0,.3,1);}
+  #search-screen.gone{opacity:0;transform:scale(1.08);pointer-events:none;}
+
+  .crest{font-size:11px;letter-spacing:.5em;text-transform:uppercase;color:var(--gold);
+    opacity:0;transform:translateY(10px);animation:rise .9s .15s forwards;}
+  .monogram{width:96px;height:96px;margin:6px 0 2px;opacity:0;transform:scale(.6) rotate(-8deg);
+    animation:pop .9s .25s cubic-bezier(.2,1.4,.4,1) forwards;}
+  .names{font-size:clamp(38px,13vw,64px);font-weight:700;line-height:1;text-align:center;
+    background:linear-gradient(180deg,#fbe7bf,var(--gold) 55%,#9d7a34);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 2px 30px rgba(201,165,87,.25);
+    opacity:0;transform:translateY(14px);animation:rise 1s .4s forwards;}
+  .amp{display:block;font-size:.5em;font-weight:500;opacity:.85;margin:-.1em 0;}
+  .subtitle{margin-top:6px;font-family:'Cormorant Garamond',serif;font-size:19px;letter-spacing:.03em;
+    color:#e6d6b2;opacity:0;animation:rise 1s .7s forwards;}
+  .subtitle small{display:block;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--rose);opacity:.8;margin-top:5px;}
+
+  .find-line{margin:min(6vh,42px) 0 12px;font-family:'Cormorant Garamond',serif;font-size:24px;
+    color:var(--goldb);opacity:0;animation:rise .9s 1s forwards;}
+  .find-ru{font-size:13px;color:var(--rose);letter-spacing:.14em;opacity:.7;}
+
+  .search-box{position:relative;width:100%;max-width:440px;opacity:0;transform:translateY(16px);
+    animation:rise .9s 1.15s forwards;}
+  .search-inner{position:relative;}
+  .ghost{position:absolute;inset:0;display:flex;align-items:center;padding:0 22px;
+    font-size:22px;font-weight:600;color:transparent;pointer-events:none;white-space:pre;overflow:hidden;}
+  .ghost b{color:transparent;}
+  .ghost .rest{color:rgba(242,214,146,.34);}
+  #q{width:100%;padding:19px 22px;font-size:22px;font-weight:600;font-family:inherit;
+    color:var(--cream);background:rgba(28,15,38,.75);
+    border:1.5px solid rgba(201,165,87,.5);border-radius:16px;outline:none;
+    box-shadow:0 0 0 0 rgba(201,165,87,.4),0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);
+    transition:border-color .2s,box-shadow .3s;position:relative;z-index:2;background-clip:padding-box;}
+  #q::placeholder{color:rgba(230,214,178,.4);font-weight:500;}
+  #q:focus{border-color:var(--goldb);box-shadow:0 0 0 4px rgba(201,165,87,.18),0 12px 44px rgba(0,0,0,.4);}
+  .search-hint{margin-top:12px;font-size:12.5px;color:rgba(230,214,178,.5);text-align:center;height:16px;}
+
+  /* results dropdown */
+  #results{width:100%;max-width:440px;margin-top:12px;display:flex;flex-direction:column;gap:9px;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding-bottom:20px;}
+  .card{display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:14px;cursor:pointer;
+    background:linear-gradient(180deg,rgba(58,34,66,.9),rgba(36,18,51,.9));
+    border:1px solid rgba(201,165,87,.28);
+    box-shadow:0 6px 18px rgba(0,0,0,.28);
+    transform:scale(.8);opacity:0;animation:cardpop .42s cubic-bezier(.2,1.5,.4,1) forwards;
+    transition:transform .12s ease, border-color .2s, box-shadow .2s;}
+  .card:active{transform:scale(.97)!important;}
+  .card .pip{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+  .card .who{flex:1;min-width:0;}
+  .card .who .nm{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;line-height:1.1;color:var(--cream);}
+  .card .who .nm mark{background:none;color:var(--goldb);text-shadow:0 0 12px rgba(242,214,146,.5);}
+  .card .who .cat{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);margin-top:3px;opacity:.85;}
+  .card .go{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);white-space:nowrap;display:flex;align-items:center;gap:5px;}
+  .card .go svg{width:16px;height:16px;}
+  .noresult{text-align:center;color:rgba(230,214,178,.45);font-family:'Cormorant Garamond',serif;font-size:19px;padding:18px;}
+
+  /* ---------- reveal overlay elements ---------- */
+  #finding{position:fixed;inset:0;z-index:7;display:none;align-items:center;justify-content:center;flex-direction:column;
+    pointer-events:none;}
+  #finding.on{display:flex;}
+  #finding .fx{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--goldb);letter-spacing:.04em;
+    opacity:0;animation:findpulse 1.4s ease forwards;text-shadow:0 0 24px rgba(242,214,146,.4);}
+  .spinner{width:46px;height:46px;margin-bottom:18px;border-radius:50%;
+    border:2px solid rgba(201,165,87,.25);border-top-color:var(--goldb);animation:spin 1s linear infinite;opacity:.9;}
+
+  /* seat name floaters */
+  .floater{position:fixed;z-index:8;transform:translate(-50%,-50%) scale(.4);opacity:0;
+    pointer-events:none;font-family:'Cormorant Garamond',serif;font-weight:600;
+    display:flex;flex-direction:column;align-items:center;}
+  .floater .fn{font-size:18px;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.8),0 0 18px rgba(242,214,146,.55);white-space:nowrap;}
+  .floater .arrow{width:2px;height:16px;background:linear-gradient(var(--goldb),transparent);margin-top:2px;border-radius:2px;}
+  .floater.show{animation:floatin .5s cubic-bezier(.2,1.5,.5,1) forwards;}
+
+  /* banner */
+  #banner{position:fixed;left:50%;bottom:-200px;transform:translateX(-50%);z-index:9;width:min(92vw,460px);
+    text-align:center;transition:bottom .7s cubic-bezier(.2,1.35,.4,1);pointer-events:none;}
+  #banner.up{bottom:max(28px,env(safe-area-inset-bottom));}
+  .banner-inner{position:relative;padding:16px 20px 18px;border-radius:18px;
+    background:linear-gradient(180deg,rgba(58,30,45,.94),rgba(30,15,25,.96));
+    border:1.5px solid rgba(201,165,87,.55);
+    box-shadow:0 14px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(242,214,146,.18);
+    backdrop-filter:blur(4px);}
+  .banner-inner::before,.banner-inner::after{content:'';position:absolute;top:9px;bottom:9px;width:1px;
+    background:linear-gradient(transparent,rgba(201,165,87,.5),transparent);}
+  .banner-inner::before{left:9px;} .banner-inner::after{right:9px;}
+  .b-party{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,6.4vw,30px);font-weight:700;line-height:1.05;
+    color:var(--cream);text-shadow:0 0 20px rgba(242,214,146,.25);}
+  .b-sub{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--rose);margin:9px 0 2px;}
+  .b-table{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:.9;
+    background:linear-gradient(180deg,#fbe7bf,var(--gold) 60%,#9d7a34);-webkit-background-clip:text;background-clip:text;color:transparent;
+    display:inline-flex;overflow:hidden;height:1em;}
+  .b-tablewrap{font-size:clamp(46px,15vw,72px);margin-top:2px;}
+  .b-roll{display:inline-block;}
+  .b-actions{display:flex;gap:10px;justify-content:center;margin-top:14px;pointer-events:auto;}
+  .b-actions button{font:inherit;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--goldb);
+    background:rgba(201,165,87,.12);border:1px solid rgba(201,165,87,.4);border-radius:999px;padding:9px 16px;cursor:pointer;
+    transition:transform .1s, background .2s;}
+  .b-actions button:active{transform:scale(.93);}
+  .b-actions button.primary{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
+
+  .footer-note{position:fixed;left:0;right:0;bottom:6px;z-index:5;text-align:center;font-size:11px;
+    color:rgba(230,214,178,.4);letter-spacing:.08em;pointer-events:none;opacity:0;transition:opacity .8s;}
+  .footer-note.on{opacity:1;}
+
+  /* mute chip */
+  #mute{position:fixed;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:12;
+    width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(28,15,38,.6);border:1px solid rgba(201,165,87,.4);color:var(--goldb);cursor:pointer;
+    backdrop-filter:blur(3px);transition:transform .1s;}
+  #mute:active{transform:scale(.9);}
+  #mute svg{width:20px;height:20px;}
+
+  #loaderr{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:30px;
+    text-align:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--rose);background:var(--void);}
+
+  /* keyframes */
+  @keyframes rise{to{opacity:1;transform:none;}}
+  @keyframes pop{to{opacity:1;transform:scale(1) rotate(0);}}
+  @keyframes cardpop{to{opacity:1;transform:scale(1);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes findpulse{0%{opacity:0;transform:scale(.9);}30%{opacity:1;transform:scale(1);}100%{opacity:1;}}
+  @keyframes floatin{to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.1ms!important;}}
+</style>
+</head>
+<body>
+  <canvas id="dust"></canvas>
+  <div id="stage-wrap"><div id="world"></div></div>
+  <div class="vignette" id="vig"></div>
+
+  <div id="mute" title="Sound">
+    <svg viewBox="0 0 24 24" id="mute-ico" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/>
+    </svg>
+  </div>
+
+  <div id="search-screen">
+    <div class="crest">The Wedding Celebration of</div>
+    <svg class="monogram" viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="46" stroke="url(#mg)" stroke-width="1.5" opacity=".7"/>
+      <circle cx="50" cy="50" r="41" stroke="url(#mg)" stroke-width=".8" opacity=".4"/>
+      <text x="50" y="60" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="38" fill="url(#mg)">D&amp;S</text>
+      <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7bf"/><stop offset="1" stop-color="#a5813a"/></linearGradient></defs>
+    </svg>
+    <div class="names">Dima<span class="amp">&amp;</span>Susie</div>
+    <div class="subtitle">Seating Plan<small>Your seat awaits</small></div>
+
+    <div class="find-line">Find your seat <span class="find-ru">· Найдите своё место</span></div>
+    <div class="search-box">
+      <div class="search-inner">
+        <div class="ghost" id="ghost"><b id="ghost-typed"></b><span class="rest" id="ghost-rest"></span></div>
+        <input id="q" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" placeholder="Type your name…" />
+      </div>
+      <div class="search-hint" id="hint"></div>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <div id="finding"><div class="spinner"></div><div class="fx" id="fx-text">Finding you…</div></div>
+
+  <div id="banner"><div class="banner-inner">
+    <div class="b-party" id="b-party"></div>
+    <div class="b-sub" id="b-sub">You are seated at</div>
+    <div class="b-tablewrap"><span class="b-table"><span class="b-roll" id="b-roll"></span></span></div>
+    <div class="b-actions">
+      <button id="replay">↻ Watch again</button>
+      <button id="back" class="primary">Find another</button>
+    </div>
+  </div></div>
+
+  <div class="footer-note" id="foot"></div>
+  <div id="loaderr">Couldn't load the seating plan.<br><span style="font-size:14px;opacity:.7">Make sure seating-data.json is beside this page.</span></div>
+
+<script id="seating-inline" type="application/json">{
+ "generated": "demo",
+ "tables": [
+  {
+   "id": "table-2",
+   "num": 3,
+   "capacity": 12,
+   "cx": 159.0,
+   "cy": 557.0
+  },
+  {
+   "id": "table-3",
+   "num": 5,
+   "capacity": 13,
+   "cx": 162.0,
+   "cy": 785.0
+  },
+  {
+   "id": "table-4",
+   "num": 7,
+   "capacity": 12,
+   "cx": 164.0,
+   "cy": 1016.0
+  },
+  {
+   "id": "table-5",
+   "num": 9,
+   "capacity": 12,
+   "cx": 396.0,
+   "cy": 1022.0
+  },
+  {
+   "id": "table-6",
+   "num": 10,
+   "capacity": 10,
+   "cx": 630.0,
+   "cy": 1022.0
+  },
+  {
+   "id": "table-7",
+   "num": 2,
+   "capacity": 11,
+   "cx": 852.0,
+   "cy": 147.0
+  },
+  {
+   "id": "table-8",
+   "num": 4,
+   "capacity": 10,
+   "cx": 852.0,
+   "cy": 370.0
+  },
+  {
+   "id": "table-9",
+   "num": 6,
+   "capacity": 12,
+   "cx": 852.0,
+   "cy": 588.0
+  },
+  {
+   "id": "table-10",
+   "num": 8,
+   "capacity": 13,
+   "cx": 852.0,
+   "cy": 809.0
+  },
+  {
+   "id": "table-11",
+   "num": 11,
+   "capacity": 12,
+   "cx": 852.0,
+   "cy": 1030.0
+  },
+  {
+   "id": "table-12",
+   "num": 1,
+   "capacity": 11,
+   "cx": 154.0,
+   "cy": 334.0
+  },
+  {
+   "id": "table-13",
+   "num": 12,
+   "capacity": 20,
+   "cx": 852.0,
+   "cy": 1359.0
+  }
+ ],
+ "guests": [
+  {
+   "id": "g0-p0",
+   "name": "Manny",
+   "group": "Manny, Jo",
+   "groupId": "g0",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 1,
+   "x": 159.0,
+   "y": 472.0
+  },
+  {
+   "id": "g0-p1",
+   "name": "Jo",
+   "group": "Manny, Jo",
+   "groupId": "g0",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 2,
+   "x": 204.6,
+   "y": 483.4
+  },
+  {
+   "id": "g1-p0",
+   "name": "Giorgio",
+   "group": "Giorgio",
+   "groupId": "g1",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 3,
+   "x": 238.0,
+   "y": 514.5
+  },
+  {
+   "id": "g2-p0",
+   "name": "Costa",
+   "group": "Costa, Sammy",
+   "groupId": "g2",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 4,
+   "x": 250.2,
+   "y": 557.0
+  },
+  {
+   "id": "g2-p1",
+   "name": "Sammy",
+   "group": "Costa, Sammy",
+   "groupId": "g2",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 5,
+   "x": 238.0,
+   "y": 599.5
+  },
+  {
+   "id": "g3-p0",
+   "name": "Sean",
+   "group": "Sean, Lea",
+   "groupId": "g3",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 6,
+   "x": 204.6,
+   "y": 630.6
+  },
+  {
+   "id": "g3-p1",
+   "name": "Lea",
+   "group": "Sean, Lea",
+   "groupId": "g3",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 7,
+   "x": 159.0,
+   "y": 642.0
+  },
+  {
+   "id": "g4-p0",
+   "name": "Uncle",
+   "group": "Uncle",
+   "groupId": "g4",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 8,
+   "x": 113.4,
+   "y": 630.6
+  },
+  {
+   "id": "g5-p0",
+   "name": "Marcus",
+   "group": "Marcus, Mel",
+   "groupId": "g5",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 9,
+   "x": 80.0,
+   "y": 599.5
+  },
+  {
+   "id": "g5-p1",
+   "name": "Mel",
+   "group": "Marcus, Mel",
+   "groupId": "g5",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 10,
+   "x": 67.8,
+   "y": 557.0
+  },
+  {
+   "id": "g6-p0",
+   "name": "Vov",
+   "group": "Vov, Stef",
+   "groupId": "g6",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 11,
+   "x": 80.0,
+   "y": 514.5
+  },
+  {
+   "id": "g6-p1",
+   "name": "Stef",
+   "group": "Vov, Stef",
+   "groupId": "g6",
+   "category": "Friends",
+   "table": "table-2",
+   "seat": 12,
+   "x": 113.4,
+   "y": 483.4
+  },
+  {
+   "id": "g7-p0",
+   "name": "Nir",
+   "group": "Nir, Kinjia",
+   "groupId": "g7",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 1,
+   "x": 162.0,
+   "y": 697.0
+  },
+  {
+   "id": "g7-p1",
+   "name": "Kinjia",
+   "group": "Nir, Kinjia",
+   "groupId": "g7",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 2,
+   "x": 205.5,
+   "y": 707.1
+  },
+  {
+   "id": "g8-p0",
+   "name": "Dima",
+   "group": "Dima, Susie",
+   "groupId": "g8",
+   "category": "Bride & Groom",
+   "table": "table-3",
+   "seat": 3,
+   "x": 239.0,
+   "y": 735.0
+  },
+  {
+   "id": "g8-p1",
+   "name": "Susie",
+   "group": "Dima, Susie",
+   "groupId": "g8",
+   "category": "Bride & Groom",
+   "table": "table-3",
+   "seat": 4,
+   "x": 254.9,
+   "y": 774.4
+  },
+  {
+   "id": "g9-p0",
+   "name": "Bonnie",
+   "group": "Bonnie, Ray",
+   "groupId": "g9",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 5,
+   "x": 249.5,
+   "y": 816.2
+  },
+  {
+   "id": "g9-p1",
+   "name": "Ray",
+   "group": "Bonnie, Ray",
+   "groupId": "g9",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 6,
+   "x": 224.1,
+   "y": 850.9
+  },
+  {
+   "id": "g10-p0",
+   "name": "Jenny",
+   "group": "Jenny, Josh",
+   "groupId": "g10",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 7,
+   "x": 184.4,
+   "y": 870.4
+  },
+  {
+   "id": "g10-p1",
+   "name": "Josh",
+   "group": "Jenny, Josh",
+   "groupId": "g10",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 8,
+   "x": 139.6,
+   "y": 870.4
+  },
+  {
+   "id": "g11-p0",
+   "name": "Mama",
+   "group": "Mama, Papa",
+   "groupId": "g11",
+   "category": "Family",
+   "table": "table-3",
+   "seat": 9,
+   "x": 99.9,
+   "y": 850.9
+  },
+  {
+   "id": "g11-p1",
+   "name": "Papa",
+   "group": "Mama, Papa",
+   "groupId": "g11",
+   "category": "Family",
+   "table": "table-3",
+   "seat": 10,
+   "x": 74.5,
+   "y": 816.2
+  },
+  {
+   "id": "g12-p0",
+   "name": "Aki",
+   "group": "Aki, Hayley",
+   "groupId": "g12",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 11,
+   "x": 69.1,
+   "y": 774.4
+  },
+  {
+   "id": "g12-p1",
+   "name": "Hayley",
+   "group": "Aki, Hayley",
+   "groupId": "g12",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 12,
+   "x": 85.0,
+   "y": 735.0
+  },
+  {
+   "id": "g13-p0",
+   "name": "George",
+   "group": "George, Adriana",
+   "groupId": "g13",
+   "category": "Friends",
+   "table": "table-3",
+   "seat": 13,
+   "x": 118.5,
+   "y": 707.1
+  },
+  {
+   "id": "g13-p1",
+   "name": "Adriana",
+   "group": "George, Adriana",
+   "groupId": "g13",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 1,
+   "x": 164.0,
+   "y": 931.0
+  },
+  {
+   "id": "g14-p0",
+   "name": "Dennis",
+   "group": "Dennis",
+   "groupId": "g14",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 2,
+   "x": 209.6,
+   "y": 942.4
+  },
+  {
+   "id": "g15-p0",
+   "name": "Dima",
+   "group": "Dima, Sasha",
+   "groupId": "g15",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 3,
+   "x": 243.0,
+   "y": 973.5
+  },
+  {
+   "id": "g15-p1",
+   "name": "Sasha",
+   "group": "Dima, Sasha",
+   "groupId": "g15",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 4,
+   "x": 255.2,
+   "y": 1016.0
+  },
+  {
+   "id": "g16-p0",
+   "name": "Arthur",
+   "group": "Arthur, Naz",
+   "groupId": "g16",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 5,
+   "x": 243.0,
+   "y": 1058.5
+  },
+  {
+   "id": "g16-p1",
+   "name": "Naz",
+   "group": "Arthur, Naz",
+   "groupId": "g16",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 6,
+   "x": 209.6,
+   "y": 1089.6
+  },
+  {
+   "id": "g17-p0",
+   "name": "Pete K",
+   "group": "Pete K",
+   "groupId": "g17",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 7,
+   "x": 164.0,
+   "y": 1101.0
+  },
+  {
+   "id": "g18-p0",
+   "name": "Papa",
+   "group": "Papa",
+   "groupId": "g18",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 8,
+   "x": 118.4,
+   "y": 1089.6
+  },
+  {
+   "id": "g19-p0",
+   "name": "Yoav",
+   "group": "Yoav, Jade",
+   "groupId": "g19",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 9,
+   "x": 85.0,
+   "y": 1058.5
+  },
+  {
+   "id": "g19-p1",
+   "name": "Jade",
+   "group": "Yoav, Jade",
+   "groupId": "g19",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 10,
+   "x": 72.8,
+   "y": 1016.0
+  },
+  {
+   "id": "g20-p0",
+   "name": "Jake",
+   "group": "Jake",
+   "groupId": "g20",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 11,
+   "x": 85.0,
+   "y": 973.5
+  },
+  {
+   "id": "g21-p0",
+   "name": "Tuvi",
+   "group": "Tuvi, Jenny",
+   "groupId": "g21",
+   "category": "Friends",
+   "table": "table-4",
+   "seat": 12,
+   "x": 118.4,
+   "y": 942.4
+  },
+  {
+   "id": "g21-p1",
+   "name": "Jenny",
+   "group": "Tuvi, Jenny",
+   "groupId": "g21",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 1,
+   "x": 396.0,
+   "y": 937.0
+  },
+  {
+   "id": "g22-p0",
+   "name": "Prush",
+   "group": "Prush, Nelanne",
+   "groupId": "g22",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 2,
+   "x": 441.6,
+   "y": 948.4
+  },
+  {
+   "id": "g22-p1",
+   "name": "Nelanne",
+   "group": "Prush, Nelanne",
+   "groupId": "g22",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 3,
+   "x": 475.0,
+   "y": 979.5
+  },
+  {
+   "id": "g23-p0",
+   "name": "Jordan",
+   "group": "Jordan, Hadeel",
+   "groupId": "g23",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 4,
+   "x": 487.2,
+   "y": 1022.0
+  },
+  {
+   "id": "g23-p1",
+   "name": "Hadeel",
+   "group": "Jordan, Hadeel",
+   "groupId": "g23",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 5,
+   "x": 475.0,
+   "y": 1064.5
+  },
+  {
+   "id": "g24-p0",
+   "name": "Pete",
+   "group": "Pete, Caitlin",
+   "groupId": "g24",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 6,
+   "x": 441.6,
+   "y": 1095.6
+  },
+  {
+   "id": "g24-p1",
+   "name": "Caitlin",
+   "group": "Pete, Caitlin",
+   "groupId": "g24",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 7,
+   "x": 396.0,
+   "y": 1107.0
+  },
+  {
+   "id": "g26-p0",
+   "name": "Ofek",
+   "group": "Ofek",
+   "groupId": "g26",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 8,
+   "x": 350.4,
+   "y": 1095.6
+  },
+  {
+   "id": "g27-p0",
+   "name": "Shahaf",
+   "group": "Shahaf, Caroline",
+   "groupId": "g27",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 9,
+   "x": 317.0,
+   "y": 1064.5
+  },
+  {
+   "id": "g27-p1",
+   "name": "Caroline",
+   "group": "Shahaf, Caroline",
+   "groupId": "g27",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 10,
+   "x": 304.8,
+   "y": 1022.0
+  },
+  {
+   "id": "g28-p0",
+   "name": "Jamie",
+   "group": "Jamie, Helena",
+   "groupId": "g28",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 11,
+   "x": 317.0,
+   "y": 979.5
+  },
+  {
+   "id": "g28-p1",
+   "name": "Helena",
+   "group": "Jamie, Helena",
+   "groupId": "g28",
+   "category": "Friends",
+   "table": "table-5",
+   "seat": 12,
+   "x": 350.4,
+   "y": 948.4
+  },
+  {
+   "id": "g29-p0",
+   "name": "Yotam",
+   "group": "Yotam, Rachel",
+   "groupId": "g29",
+   "category": "Friends",
+   "table": "table-6",
+   "seat": 1,
+   "x": 630.0,
+   "y": 940.0
+  },
+  {
+   "id": "g29-p1",
+   "name": "Rachel",
+   "group": "Yotam, Rachel",
+   "groupId": "g29",
+   "category": "Friends",
+   "table": "table-6",
+   "seat": 2,
+   "x": 681.7,
+   "y": 955.7
+  },
+  {
+   "id": "g30-p0",
+   "name": "Melvin",
+   "group": "Melvin",
+   "groupId": "g30",
+   "category": "Friends",
+   "table": "table-6",
+   "seat": 3,
+   "x": 713.7,
+   "y": 996.7
+  },
+  {
+   "id": "g31-p0",
+   "name": "Serena",
+   "group": "Serena, Jeremy",
+   "groupId": "g31",
+   "category": "Friends",
+   "table": "table-6",
+   "seat": 4,
+   "x": 713.7,
+   "y": 1047.3
+  },
+  {
+   "id": "g31-p1",
+   "name": "Jeremy",
+   "group": "Serena, Jeremy",
+   "groupId": "g31",
+   "category": "Friends",
+   "table": "table-6",
+   "seat": 5,
+   "x": 681.7,
+   "y": 1088.3
+  },
+  {
+   "id": "g32-p0",
+   "name": "Denis",
+   "group": "Denis, Arny",
+   "groupId": "g32",
+   "category": "Family",
+   "table": "table-6",
+   "seat": 6,
+   "x": 630.0,
+   "y": 1104.0
+  },
+  {
+   "id": "g32-p1",
+   "name": "Arny",
+   "group": "Denis, Arny",
+   "groupId": "g32",
+   "category": "Family",
+   "table": "table-6",
+   "seat": 7,
+   "x": 578.3,
+   "y": 1088.3
+  },
+  {
+   "id": "g33-p0",
+   "name": "Zhenia",
+   "group": "Zhenia",
+   "groupId": "g33",
+   "category": "Family",
+   "table": "table-6",
+   "seat": 8,
+   "x": 546.3,
+   "y": 1047.3
+  },
+  {
+   "id": "g34-p0",
+   "name": "Gena",
+   "group": "Gena",
+   "groupId": "g34",
+   "category": "Family",
+   "table": "table-6",
+   "seat": 9,
+   "x": 546.3,
+   "y": 996.7
+  },
+  {
+   "id": "g35-p0",
+   "name": "Alla",
+   "group": "Alla, Slavik",
+   "groupId": "g35",
+   "category": "Family",
+   "table": "table-6",
+   "seat": 10,
+   "x": 578.3,
+   "y": 955.7
+  },
+  {
+   "id": "g35-p1",
+   "name": "Slavik",
+   "group": "Alla, Slavik",
+   "groupId": "g35",
+   "category": "Family",
+   "table": "table-7",
+   "seat": 1,
+   "x": 852.0,
+   "y": 65.0
+  },
+  {
+   "id": "g36-p0",
+   "name": "Leonid",
+   "group": "Leonid",
+   "groupId": "g36",
+   "category": "Family",
+   "table": "table-7",
+   "seat": 2,
+   "x": 900.0,
+   "y": 78.0
+  },
+  {
+   "id": "g37-p0",
+   "name": "Lucy",
+   "group": "Lucy",
+   "groupId": "g37",
+   "category": "Family",
+   "table": "table-7",
+   "seat": 3,
+   "x": 932.8,
+   "y": 112.9
+  },
+  {
+   "id": "g38-p0",
+   "name": "Michael",
+   "group": "Michael",
+   "groupId": "g38",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 4,
+   "x": 939.9,
+   "y": 158.7
+  },
+  {
+   "id": "g39-p0",
+   "name": "Alla",
+   "group": "Alla, Lev",
+   "groupId": "g39",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 5,
+   "x": 919.1,
+   "y": 200.7
+  },
+  {
+   "id": "g39-p1",
+   "name": "Lev",
+   "group": "Alla, Lev",
+   "groupId": "g39",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 6,
+   "x": 877.0,
+   "y": 225.7
+  },
+  {
+   "id": "g40-p0",
+   "name": "Vicky",
+   "group": "Vicky, Mark",
+   "groupId": "g40",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 7,
+   "x": 827.0,
+   "y": 225.7
+  },
+  {
+   "id": "g40-p1",
+   "name": "Mark",
+   "group": "Vicky, Mark",
+   "groupId": "g40",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 8,
+   "x": 784.9,
+   "y": 200.7
+  },
+  {
+   "id": "g41-p0",
+   "name": "Lena",
+   "group": "Lena, Slavik",
+   "groupId": "g41",
+   "category": "Friends",
+   "table": "table-7",
+   "seat": 9,
+   "x": 764.1,
+   "y": 158.7
+  },
+  {
+   "id": "g41-p1",
+   "name": "Slavik",
+   "group": "Lena, Slavik",
+   "groupId": "g41",
+   "category": "Friends",
+   "table": "table-7",
+   "seat": 10,
+   "x": 771.2,
+   "y": 112.9
+  },
+  {
+   "id": "g42-p0",
+   "name": "Alex",
+   "group": "Alex, Sarah",
+   "groupId": "g42",
+   "category": "Cousins",
+   "table": "table-7",
+   "seat": 11,
+   "x": 804.0,
+   "y": 78.0
+  },
+  {
+   "id": "g42-p1",
+   "name": "Sarah",
+   "group": "Alex, Sarah",
+   "groupId": "g42",
+   "category": "Cousins",
+   "table": "table-8",
+   "seat": 1,
+   "x": 852.0,
+   "y": 285.0
+  },
+  {
+   "id": "g43-p0",
+   "name": "Sophy",
+   "group": "Sophy, Alex",
+   "groupId": "g43",
+   "category": "Family",
+   "table": "table-8",
+   "seat": 2,
+   "x": 905.6,
+   "y": 301.2
+  },
+  {
+   "id": "g43-p1",
+   "name": "Alex",
+   "group": "Sophy, Alex",
+   "groupId": "g43",
+   "category": "Family",
+   "table": "table-8",
+   "seat": 3,
+   "x": 938.7,
+   "y": 343.7
+  },
+  {
+   "id": "g44-p0",
+   "name": "Alexandra",
+   "group": "Alexandra, Nikolay",
+   "groupId": "g44",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 4,
+   "x": 938.7,
+   "y": 396.3
+  },
+  {
+   "id": "g44-p1",
+   "name": "Nikolay",
+   "group": "Alexandra, Nikolay",
+   "groupId": "g44",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 5,
+   "x": 905.6,
+   "y": 438.8
+  },
+  {
+   "id": "g45-p0",
+   "name": "Svetlana",
+   "group": "Svetlana, Grigory",
+   "groupId": "g45",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 6,
+   "x": 852.0,
+   "y": 455.0
+  },
+  {
+   "id": "g45-p1",
+   "name": "Grigory",
+   "group": "Svetlana, Grigory",
+   "groupId": "g45",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 7,
+   "x": 798.4,
+   "y": 438.8
+  },
+  {
+   "id": "g46-p0",
+   "name": "Natasha",
+   "group": "Natasha, Edik",
+   "groupId": "g46",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 8,
+   "x": 765.3,
+   "y": 396.3
+  },
+  {
+   "id": "g46-p1",
+   "name": "Edik",
+   "group": "Natasha, Edik",
+   "groupId": "g46",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 9,
+   "x": 765.3,
+   "y": 343.7
+  },
+  {
+   "id": "g47-p0",
+   "name": "Inna",
+   "group": "Inna, David",
+   "groupId": "g47",
+   "category": "Family Friends",
+   "table": "table-8",
+   "seat": 10,
+   "x": 798.4,
+   "y": 301.2
+  },
+  {
+   "id": "g47-p1",
+   "name": "David",
+   "group": "Inna, David",
+   "groupId": "g47",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 1,
+   "x": 852.0,
+   "y": 503.0
+  },
+  {
+   "id": "g49-p0",
+   "name": "Alex",
+   "group": "Alex, Katia",
+   "groupId": "g49",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 2,
+   "x": 897.6,
+   "y": 514.4
+  },
+  {
+   "id": "g49-p1",
+   "name": "Katia",
+   "group": "Alex, Katia",
+   "groupId": "g49",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 3,
+   "x": 931.0,
+   "y": 545.5
+  },
+  {
+   "id": "g50-p0",
+   "name": "Alla",
+   "group": "Alla, Boris",
+   "groupId": "g50",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 4,
+   "x": 943.2,
+   "y": 588.0
+  },
+  {
+   "id": "g50-p1",
+   "name": "Boris",
+   "group": "Alla, Boris",
+   "groupId": "g50",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 5,
+   "x": 931.0,
+   "y": 630.5
+  },
+  {
+   "id": "g51-p0",
+   "name": "Valery",
+   "group": "Valery, Slava",
+   "groupId": "g51",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 6,
+   "x": 897.6,
+   "y": 661.6
+  },
+  {
+   "id": "g51-p1",
+   "name": "Slava",
+   "group": "Valery, Slava",
+   "groupId": "g51",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 7,
+   "x": 852.0,
+   "y": 673.0
+  },
+  {
+   "id": "g52-p0",
+   "name": "Efim",
+   "group": "Efim, Tanya",
+   "groupId": "g52",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 8,
+   "x": 806.4,
+   "y": 661.6
+  },
+  {
+   "id": "g52-p1",
+   "name": "Tanya",
+   "group": "Efim, Tanya",
+   "groupId": "g52",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 9,
+   "x": 773.0,
+   "y": 630.5
+  },
+  {
+   "id": "g54-p0",
+   "name": "Tanya",
+   "group": "Tanya, Michael",
+   "groupId": "g54",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 10,
+   "x": 760.8,
+   "y": 588.0
+  },
+  {
+   "id": "g54-p1",
+   "name": "Michael",
+   "group": "Tanya, Michael",
+   "groupId": "g54",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 11,
+   "x": 773.0,
+   "y": 545.5
+  },
+  {
+   "id": "g55-p0",
+   "name": "Zhanna",
+   "group": "Zhanna, Igor",
+   "groupId": "g55",
+   "category": "Family Friends",
+   "table": "table-9",
+   "seat": 12,
+   "x": 806.4,
+   "y": 514.4
+  },
+  {
+   "id": "g55-p1",
+   "name": "Igor",
+   "group": "Zhanna, Igor",
+   "groupId": "g55",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 1,
+   "x": 852.0,
+   "y": 721.0
+  },
+  {
+   "id": "g56-p0",
+   "name": "Dima",
+   "group": "Dima, Lena",
+   "groupId": "g56",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 2,
+   "x": 895.5,
+   "y": 731.1
+  },
+  {
+   "id": "g56-p1",
+   "name": "Lena",
+   "group": "Dima, Lena",
+   "groupId": "g56",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 3,
+   "x": 929.0,
+   "y": 759.0
+  },
+  {
+   "id": "g57-p0",
+   "name": "Marina",
+   "group": "Marina, Rudolf",
+   "groupId": "g57",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 4,
+   "x": 944.9,
+   "y": 798.4
+  },
+  {
+   "id": "g57-p1",
+   "name": "Rudolf",
+   "group": "Marina, Rudolf",
+   "groupId": "g57",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 5,
+   "x": 939.5,
+   "y": 840.2
+  },
+  {
+   "id": "g58-p0",
+   "name": "Svetlana",
+   "group": "Svetlana, Roma",
+   "groupId": "g58",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 6,
+   "x": 914.1,
+   "y": 874.9
+  },
+  {
+   "id": "g58-p1",
+   "name": "Roma",
+   "group": "Svetlana, Roma",
+   "groupId": "g58",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 7,
+   "x": 874.4,
+   "y": 894.4
+  },
+  {
+   "id": "g59-p0",
+   "name": "Diana",
+   "group": "Diana, Roma",
+   "groupId": "g59",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 8,
+   "x": 829.6,
+   "y": 894.4
+  },
+  {
+   "id": "g59-p1",
+   "name": "Roma",
+   "group": "Diana, Roma",
+   "groupId": "g59",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 9,
+   "x": 789.9,
+   "y": 874.9
+  },
+  {
+   "id": "g60-p0",
+   "name": "Stella",
+   "group": "Stella, Pavel",
+   "groupId": "g60",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 10,
+   "x": 764.5,
+   "y": 840.2
+  },
+  {
+   "id": "g60-p1",
+   "name": "Pavel",
+   "group": "Stella, Pavel",
+   "groupId": "g60",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 11,
+   "x": 759.1,
+   "y": 798.4
+  },
+  {
+   "id": "g61-p0",
+   "name": "Victoria",
+   "group": "Victoria, Eugene",
+   "groupId": "g61",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 12,
+   "x": 775.0,
+   "y": 759.0
+  },
+  {
+   "id": "g61-p1",
+   "name": "Eugene",
+   "group": "Victoria, Eugene",
+   "groupId": "g61",
+   "category": "Family Friends",
+   "table": "table-10",
+   "seat": 13,
+   "x": 808.5,
+   "y": 731.1
+  },
+  {
+   "id": "g62-p0",
+   "name": "Irina",
+   "group": "Irina",
+   "groupId": "g62",
+   "category": "Family Friends",
+   "table": "table-11",
+   "seat": 1,
+   "x": 852.0,
+   "y": 945.0
+  },
+  {
+   "id": "g63-p0",
+   "name": "Susie's Mum",
+   "group": "Susie's Mum, Dad",
+   "groupId": "g63",
+   "category": "Family",
+   "table": "table-11",
+   "seat": 2,
+   "x": 897.6,
+   "y": 956.4
+  },
+  {
+   "id": "g63-p1",
+   "name": "Dad",
+   "group": "Susie's Mum, Dad",
+   "groupId": "g63",
+   "category": "Family",
+   "table": "table-11",
+   "seat": 3,
+   "x": 931.0,
+   "y": 987.5
+  },
+  {
+   "id": "g64-p0",
+   "name": "Andy",
+   "group": "Andy",
+   "groupId": "g64",
+   "category": "Family",
+   "table": "table-11",
+   "seat": 4,
+   "x": 943.2,
+   "y": 1030.0
+  },
+  {
+   "id": "g65-p0",
+   "name": "Arnold",
+   "group": "Arnold, Rose, Jeanne",
+   "groupId": "g65",
+   "category": "Family Friends",
+   "table": "table-11",
+   "seat": 5,
+   "x": 931.0,
+   "y": 1072.5
+  },
+  {
+   "id": "g65-p1",
+   "name": "Rose",
+   "group": "Arnold, Rose, Jeanne",
+   "groupId": "g65",
+   "category": "Family Friends",
+   "table": "table-11",
+   "seat": 6,
+   "x": 897.6,
+   "y": 1103.6
+  },
+  {
+   "id": "g65-p2",
+   "name": "Jeanne",
+   "group": "Arnold, Rose, Jeanne",
+   "groupId": "g65",
+   "category": "Family Friends",
+   "table": "table-11",
+   "seat": 7,
+   "x": 852.0,
+   "y": 1115.0
+  },
+  {
+   "id": "g67-p0",
+   "name": "Oi",
+   "group": "Oi",
+   "groupId": "g67",
+   "category": "Family Friends",
+   "table": "table-11",
+   "seat": 8,
+   "x": 806.4,
+   "y": 1103.6
+  },
+  {
+   "id": "g68-p0",
+   "name": "Josh",
+   "group": "Josh, Lauren",
+   "groupId": "g68",
+   "category": "Friends",
+   "table": "table-11",
+   "seat": 9,
+   "x": 773.0,
+   "y": 1072.5
+  },
+  {
+   "id": "g68-p1",
+   "name": "Lauren",
+   "group": "Josh, Lauren",
+   "groupId": "g68",
+   "category": "Friends",
+   "table": "table-11",
+   "seat": 10,
+   "x": 760.8,
+   "y": 1030.0
+  },
+  {
+   "id": "g71-p0",
+   "name": "Simon",
+   "group": "Simon, Kate",
+   "groupId": "g71",
+   "category": "Friends",
+   "table": "table-11",
+   "seat": 11,
+   "x": 773.0,
+   "y": 987.5
+  },
+  {
+   "id": "g71-p1",
+   "name": "Kate",
+   "group": "Simon, Kate",
+   "groupId": "g71",
+   "category": "Friends",
+   "table": "table-11",
+   "seat": 12,
+   "x": 806.4,
+   "y": 956.4
+  },
+  {
+   "id": "g72-p0",
+   "name": "Jack",
+   "group": "Jack",
+   "groupId": "g72",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 1,
+   "x": 154.0,
+   "y": 246.0
+  },
+  {
+   "id": "g73-p0",
+   "name": "Daniel",
+   "group": "Daniel, Natalie, Brock",
+   "groupId": "g73",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 2,
+   "x": 201.6,
+   "y": 260.0
+  },
+  {
+   "id": "g73-p1",
+   "name": "Natalie",
+   "group": "Daniel, Natalie, Brock",
+   "groupId": "g73",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 3,
+   "x": 234.0,
+   "y": 297.4
+  },
+  {
+   "id": "g73-p2",
+   "name": "Brock",
+   "group": "Daniel, Natalie, Brock",
+   "groupId": "g73",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 4,
+   "x": 241.1,
+   "y": 346.5
+  },
+  {
+   "id": "g74-p0",
+   "name": "Ty",
+   "group": "Ty",
+   "groupId": "g74",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 5,
+   "x": 220.5,
+   "y": 391.6
+  },
+  {
+   "id": "g75-p0",
+   "name": "Alon",
+   "group": "Alon, Shana",
+   "groupId": "g75",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 6,
+   "x": 178.8,
+   "y": 418.4
+  },
+  {
+   "id": "g75-p1",
+   "name": "Shana",
+   "group": "Alon, Shana",
+   "groupId": "g75",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 7,
+   "x": 129.2,
+   "y": 418.4
+  },
+  {
+   "id": "g76-p0",
+   "name": "Dados",
+   "group": "Dados, Dadon",
+   "groupId": "g76",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 8,
+   "x": 87.5,
+   "y": 391.6
+  },
+  {
+   "id": "g76-p1",
+   "name": "Dadon",
+   "group": "Dados, Dadon",
+   "groupId": "g76",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 9,
+   "x": 66.9,
+   "y": 346.5
+  },
+  {
+   "id": "g78-p0",
+   "name": "Ed",
+   "group": "Ed",
+   "groupId": "g78",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 10,
+   "x": 74.0,
+   "y": 297.4
+  },
+  {
+   "id": "g79-p0",
+   "name": "Danny",
+   "group": "Danny, Inbal",
+   "groupId": "g79",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 11,
+   "x": 106.4,
+   "y": 260.0
+  },
+  {
+   "id": "g79-p1",
+   "name": "Inbal",
+   "group": "Danny, Inbal",
+   "groupId": "g79",
+   "category": "Friends",
+   "table": "table-13",
+   "seat": 1,
+   "x": 852.0,
+   "y": 1150.0
+  },
+  {
+   "id": "g80-p0",
+   "name": "Freddy",
+   "group": "Freddy, Liza, Karin",
+   "groupId": "g80",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 2,
+   "x": 901.0,
+   "y": 1164.9
+  },
+  {
+   "id": "g80-p1",
+   "name": "Liza",
+   "group": "Freddy, Liza, Karin",
+   "groupId": "g80",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 3,
+   "x": 933.4,
+   "y": 1204.5
+  },
+  {
+   "id": "g80-p2",
+   "name": "Karin",
+   "group": "Freddy, Liza, Karin",
+   "groupId": "g80",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 4,
+   "x": 940.0,
+   "y": 1255.5
+  },
+  {
+   "id": "g81-p0",
+   "name": "Eva",
+   "group": "Eva, Yakov",
+   "groupId": "g81",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 5,
+   "x": 940.0,
+   "y": 1307.3
+  },
+  {
+   "id": "g81-p1",
+   "name": "Yakov",
+   "group": "Eva, Yakov",
+   "groupId": "g81",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 6,
+   "x": 940.0,
+   "y": 1359.1
+  },
+  {
+   "id": "g82-p0",
+   "name": "Eddy",
+   "group": "Eddy, David",
+   "groupId": "g82",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 7,
+   "x": 940.0,
+   "y": 1411.0
+  },
+  {
+   "id": "g82-p1",
+   "name": "David",
+   "group": "Eddy, David",
+   "groupId": "g82",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 8,
+   "x": 940.0,
+   "y": 1462.8
+  },
+  {
+   "id": "g83-p0",
+   "name": "Luba",
+   "group": "Luba",
+   "groupId": "g83",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 9,
+   "x": 933.2,
+   "y": 1513.8
+  },
+  {
+   "id": "g84-p0",
+   "name": "Misha",
+   "group": "Misha",
+   "groupId": "g84",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 10,
+   "x": 900.8,
+   "y": 1553.2
+  },
+  {
+   "id": "g85-p0",
+   "name": "Olga",
+   "group": "Olga",
+   "groupId": "g85",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 11,
+   "x": 851.9,
+   "y": 1568.0
+  },
+  {
+   "id": "g86-p0",
+   "name": "Michael",
+   "group": "Michael, Veronica, Emma",
+   "groupId": "g86",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 12,
+   "x": 803.0,
+   "y": 1553.1
+  },
+  {
+   "id": "g86-p1",
+   "name": "Veronica",
+   "group": "Michael, Veronica, Emma",
+   "groupId": "g86",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 13,
+   "x": 770.6,
+   "y": 1513.5
+  },
+  {
+   "id": "g86-p2",
+   "name": "Emma",
+   "group": "Michael, Veronica, Emma",
+   "groupId": "g86",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 14,
+   "x": 764.0,
+   "y": 1462.6
+  },
+  {
+   "id": "g87-p0",
+   "name": "Natalie",
+   "group": "Natalie, Matt",
+   "groupId": "g87",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 15,
+   "x": 764.0,
+   "y": 1410.8
+  },
+  {
+   "id": "g87-p1",
+   "name": "Matt",
+   "group": "Natalie, Matt",
+   "groupId": "g87",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 16,
+   "x": 764.0,
+   "y": 1358.9
+  },
+  {
+   "id": "g88-p0",
+   "name": "Greg",
+   "group": "Greg",
+   "groupId": "g88",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 17,
+   "x": 764.0,
+   "y": 1307.1
+  },
+  {
+   "id": "g89-p0",
+   "name": "Isaac",
+   "group": "Isaac",
+   "groupId": "g89",
+   "category": "Cousins",
+   "table": "table-13",
+   "seat": 18,
+   "x": 764.0,
+   "y": 1255.2
+  },
+  {
+   "id": "g90-p0",
+   "name": "Igor",
+   "group": "Igor",
+   "groupId": "g90",
+   "category": "Family Friends",
+   "table": "table-13",
+   "seat": 19,
+   "x": 770.7,
+   "y": 1204.3
+  },
+  {
+   "id": "g91-p0",
+   "name": "AaronF",
+   "group": "AaronF",
+   "groupId": "g91",
+   "category": "Friends",
+   "table": "table-13",
+   "seat": 20,
+   "x": 803.1,
+   "y": 1164.8
+  }
+ ]
+}</script>
+<script>
+"use strict";
+/* ============================================================= DATA ===== */
+const DECOR_W = 1000, DECOR_H = 1600;
+let DATA=null, PARTIES=[], NAME_INDEX=[], TNUM={}, currentParty=null;
+
+/* strip accents + lowercase for matching */
+const norm = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+
+async function boot(){
+  // Prefer a live seating-data.json (for the hosted site / fresh exports); fall back to inlined data
+  // so the file also works when opened directly (double-clicked, no server).
+  try{
+    const res = await fetch('seating-data.json?_=' + Date.now());
+    if(res.ok) DATA = await res.json();
+  }catch(e){}
+  if(!DATA){
+    const inl=document.getElementById('seating-inline');
+    if(inl){ try{ DATA=JSON.parse(inl.textContent); }catch(_){} }
+  }
+  if(!DATA){ document.getElementById('loaderr').style.display='flex'; return; }
+  DATA.tables.forEach(t=>TNUM[t.id]=t.num);
+  buildParties();
+  buildRoom();
+  fitRoom(true);
+  wireSearch();
+  startDust();
+}
+
+function buildParties(){
+  const byGroup = {};
+  DATA.guests.forEach(g=>{
+    if(!byGroup[g.groupId]) byGroup[g.groupId] = {groupId:g.groupId,label:g.group,category:g.category,members:[]};
+    byGroup[g.groupId].members.push(g);
+  });
+  PARTIES = Object.values(byGroup).map(p=>{
+    const seated = p.members.filter(m=>m.x!=null);
+    const cx = seated.length? seated.reduce((s,m)=>s+m.x,0)/seated.length : DECOR_W/2;
+    const cy = seated.length? seated.reduce((s,m)=>s+m.y,0)/seated.length : DECOR_H/2;
+    const tables = [...new Set(seated.map(m=>m.table))];
+    p.cx=cx; p.cy=cy; p.tables=tables; p.seated=seated;
+    p.tableNums=[...new Set(seated.map(m=>TNUM[m.table]))].sort((a,b)=>a-b);
+    p.names = p.members.map(m=>m.name);
+    return p;
+  });
+  PARTIES.forEach(p=>{
+    p.members.forEach(m=>{
+      NAME_INDEX.push({key:norm(m.name), full:m.name, party:p});
+    });
+    NAME_INDEX.push({key:norm(p.label.replace(/,/g,' ')), full:p.label, party:p});
+  });
+}
+
+/* ============================================================= ROOM ===== */
+function buildRoom(){
+  // group seats by table
+  const tSeats={}; DATA.guests.forEach(g=>{ if(g.x!=null){ (tSeats[g.table]=tSeats[g.table]||[]).push(g); } });
+  let tableShapes='';
+  DATA.tables.forEach(t=>{
+    const seats=tSeats[t.id]||[];
+    if(!seats.length) return;
+    const xs=seats.map(s=>s.x), ys=seats.map(s=>s.y);
+    const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+    const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+    const rx=Math.max(28,(maxx-minx)/2-16), ry=Math.max(28,(maxy-miny)/2-16);
+    const isPill = (ry/rx)>1.7 || (rx/ry)>1.7;
+    const shape = isPill
+      ? `<rect x="${(cx-rx).toFixed(1)}" y="${(cy-ry).toFixed(1)}" width="${(rx*2).toFixed(1)}" height="${(ry*2).toFixed(1)}" rx="${Math.min(rx,ry).toFixed(1)}" class="ttop"/>`
+      : `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" class="ttop"/>`;
+    let seatDots='';
+    seats.forEach(s=>{ seatDots += `<circle id="seat-${s.id}" cx="${s.x}" cy="${s.y}" r="13" class="chair"/>`; });
+    tableShapes += `<g class="table" data-t="${t.id}">${shape}
+      <text x="${cx.toFixed(1)}" y="${(cy+9).toFixed(1)}" class="tnum" text-anchor="middle">${t.num}</text>
+      ${seatDots}</g>`;
+  });
+
+  const svg = `<svg width="${DECOR_W}" height="${DECOR_H}" viewBox="0 0 ${DECOR_W} ${DECOR_H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="floorGlow" cx="50%" cy="42%" r="70%">
+        <stop offset="0" stop-color="#3a2145"/><stop offset="100%" stop-color="#1a0f22"/>
+      </radialGradient>
+      <linearGradient id="stageG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8a2f3f"/><stop offset="1" stop-color="#4d1622"/>
+      </linearGradient>
+      <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f2d692"/><stop offset="1" stop-color="#8f6f2e"/>
+      </linearGradient>
+      <pattern id="parquet" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+        <rect width="46" height="46" fill="#2c1a3a"/>
+        <path d="M0 11 L23 34 M0 34 L23 57 M23 34 L46 11 M23 57 L46 34" stroke="#3d2650" stroke-width="1.2" opacity=".7"/>
+        <path d="M0 0 L23 23 M23 23 L46 0" stroke="#4a2f61" stroke-width="1" opacity=".5"/>
+      </pattern>
+      <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity=".45"/></filter>
+      <radialGradient id="seatG" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff8ea"/><stop offset="1" stop-color="#e5cfa0"/></radialGradient>
+    </defs>
+
+    <rect x="0" y="0" width="${DECOR_W}" height="${DECOR_H}" fill="url(#floorGlow)"/>
+    <rect x="16" y="16" width="${DECOR_W-32}" height="${DECOR_H-32}" rx="26" fill="none" stroke="url(#goldStroke)" stroke-width="2.5" opacity=".65"/>
+    <rect x="24" y="24" width="${DECOR_W-48}" height="${DECOR_H-48}" rx="20" fill="none" stroke="url(#goldStroke)" stroke-width="1" opacity=".3"/>
+
+    <!-- stage -->
+    <g filter="url(#soft)">
+      <rect x="300" y="42" width="400" height="112" rx="12" fill="url(#stageG)" stroke="url(#goldStroke)" stroke-width="1.5"/>
+      <path d="M300 54 Q340 92 300 130" fill="#6a2333" opacity=".6"/><path d="M700 54 Q660 92 700 130" fill="#6a2333" opacity=".6"/>
+      <text x="500" y="106" text-anchor="middle" class="zone" font-size="17" letter-spacing="6">STAGE</text>
+    </g>
+    <!-- cakes -->
+    <g filter="url(#soft)"><circle cx="150" cy="128" r="52" fill="#2f1c3f" stroke="url(#goldStroke)" stroke-width="1.5"/>
+      <text x="150" y="123" text-anchor="middle" class="zone" font-size="12" letter-spacing="2">CAKES</text>
+      <text x="150" y="140" text-anchor="middle" class="zone" font-size="12" letter-spacing="2">&amp; SWEETS</text></g>
+    <!-- dance floor -->
+    <g filter="url(#soft)">
+      <rect x="296" y="176" width="424" height="724" rx="20" fill="url(#parquet)" stroke="url(#goldStroke)" stroke-width="1.5"/>
+      <circle cx="508" cy="538" r="52" fill="none" stroke="url(#goldStroke)" stroke-width="1" opacity=".5"/>
+      <circle cx="508" cy="538" r="38" fill="none" stroke="url(#goldStroke)" stroke-width=".7" opacity=".35"/>
+      <text x="508" y="544" text-anchor="middle" class="zone" font-size="15" letter-spacing="5" opacity=".7">DANCE FLOOR</text>
+    </g>
+    <!-- void -->
+    <g filter="url(#soft)"><rect x="40" y="1143" width="470" height="104" rx="14" fill="#120a18" stroke="url(#goldStroke)" stroke-width="1" opacity=".9"/>
+      <text x="275" y="1201" text-anchor="middle" class="zone" font-size="12" letter-spacing="4" opacity=".55">VOID · STAIRS</text></g>
+
+    ${tableShapes}
+  </svg>`;
+  const world = document.getElementById('world');
+  world.style.width=DECOR_W+'px'; world.style.height=DECOR_H+'px';
+  world.innerHTML = svg;
+  // inject svg-scoped styles
+  const st=document.createElementNS('http://www.w3.org/2000/svg','style');
+  st.textContent=`.ttop{fill:#f6ecd4;stroke:url(#goldStroke);stroke-width:2;filter:url(#soft);}
+    .chair{fill:url(#seatG);stroke:#c9a557;stroke-width:1.4;transition:none;}
+    .chair.glow{fill:#ffe9a8;stroke:#fff3cf;stroke-width:2.4;}
+    .tnum{fill:#7a2e3b;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:30px;}
+    .zone{fill:#e2c98c;font-family:'Cormorant Garamond',serif;opacity:.8;}`;
+  world.querySelector('svg').prepend(st);
+}
+
+/* ============================================================= CAMERA ==== */
+let cam={x:0,y:0,k:1}, camAnim=null;
+function applyCam(){ document.getElementById('world').style.transform=`translate(${cam.x}px,${cam.y}px) scale(${cam.k})`; }
+function viewport(){ return {w:window.innerWidth, h:window.innerHeight}; }
+function camFor(tx,ty,k){ const v=viewport(); return {x:v.w/2 - tx*k, y:v.h/2 - ty*k, k}; }
+function fitRoom(instant){
+  const v=viewport();
+  const k=Math.min(v.w/(DECOR_W+40), v.h/(DECOR_H+40));
+  const target=camFor(DECOR_W/2, DECOR_H/2, k);
+  if(instant){ cam={...target}; applyCam(); } else tween(cam,target,900,easeInOut);
+}
+const easeOut=t=>1-Math.pow(1-t,3);
+const easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeBack=t=>{const c=1.70158+1;return 1+ (c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+function tween(from,to,dur,ease,onEnd,onStep){
+  if(camAnim) cancelAnimationFrame(camAnim);
+  const s={...from}, t0=performance.now();
+  const step=now=>{
+    let t=Math.min(1,(now-t0)/dur); const e=ease(t);
+    cam.x=s.x+(to.x-s.x)*e; cam.y=s.y+(to.y-s.y)*e; cam.k=s.k+(to.k-s.k)*e;
+    applyCam(); if(onStep) onStep(t);
+    if(t<1) camAnim=requestAnimationFrame(step); else { camAnim=null; if(onEnd) onEnd(); }
+  };
+  camAnim=requestAnimationFrame(step);
+}
+
+/* ============================================================= REVEAL ==== */
+let floaters=[];
+function clearFloaters(){ floaters.forEach(f=>f.remove()); floaters=[]; document.querySelectorAll('.chair.glow').forEach(c=>c.classList.remove('glow')); }
+
+function reveal(party){
+  currentParty=party;
+  clearFloaters();
+  document.getElementById('search-screen').classList.add('gone');
+  document.getElementById('vig').classList.add('on');
+  const finding=document.getElementById('finding'); finding.classList.add('on');
+  audio.startWaltz();
+
+  // Beat: hold on the whole room briefly, pulled back a touch (anticipation)
+  const v=viewport();
+  const wide=camFor(DECOR_W/2, DECOR_H/2, Math.min(v.w/(DECOR_W+40),v.h/(DECOR_H+40))*0.86);
+  tween(cam, wide, 700, easeInOut, ()=>{
+    finding.classList.remove('on');
+    // The dive: swoop to the party with a spring overshoot
+    const targetK = Math.min(3.4, Math.max(1.9, 520/Math.max(120, spread(party))));
+    const dest=camFor(party.cx, party.cy - 40/targetK, targetK);
+    tween(cam, dest, 1750, easeBack, ()=>arrive(party));
+  });
+}
+function spread(p){ // bounding size of party's seats
+  const xs=p.seated.map(m=>m.x), ys=p.seated.map(m=>m.y);
+  if(!xs.length) return 200;
+  return Math.max(120, Math.hypot(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys)) + 200);
+}
+
+function arrive(party){
+  if(navigator.vibrate) navigator.vibrate([18,40,22]);
+  audio.arrival();
+  // ignite chairs one by one, with floaters
+  party.seated.forEach((m,i)=>{
+    setTimeout(()=>{
+      const c=document.getElementById('seat-'+m.id);
+      if(c){ c.classList.add('glow'); pulseBurst(m.x,m.y); if(i>0&&navigator.vibrate) navigator.vibrate(12); audio.chime(i); }
+      addFloater(m);
+    }, 260*i + 120);
+  });
+  // banner
+  setTimeout(()=>showBanner(party), 260*party.seated.length + 260);
+  setTimeout(()=>{ document.getElementById('foot').textContent = `One of ${DATA.guests.length} loved ones celebrating tonight`; document.getElementById('foot').classList.add('on'); }, 260*party.seated.length + 900);
+}
+
+function screenPos(wx,wy){ return {x:cam.x+wx*cam.k, y:cam.y+wy*cam.k}; }
+function addFloater(m){
+  const p=screenPos(m.x, m.y - 20);
+  const el=document.createElement('div'); el.className='floater';
+  el.style.left=p.x+'px'; el.style.top=p.y+'px';
+  el.innerHTML=`<div class="fn">${escapeHtml(m.name)}</div><div class="arrow"></div>`;
+  document.body.appendChild(el); floaters.push(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+}
+function repositionFloaters(){ if(!currentParty) return; currentParty.seated.forEach((m,i)=>{ const el=floaters[i]; if(!el) return; const p=screenPos(m.x,m.y-20); el.style.left=p.x+'px'; el.style.top=p.y+'px'; }); }
+
+function joinNames(arr){
+  if(arr.length<=1) return arr[0]||'';
+  if(arr.length===2) return arr[0]+' & '+arr[1];
+  return arr.slice(0,-1).join(', ')+' & '+arr[arr.length-1];
+}
+function showBanner(party){
+  document.getElementById('b-party').textContent = joinNames(party.names);
+  const b=document.getElementById('b-sub');
+  b.textContent = party.tableNums.length>1 ? 'You are seated across' : 'You are seated at';
+  rollNumber(party.tableNums.join(' & '));
+  document.getElementById('banner').classList.add('up');
+}
+function rollNumber(str){
+  const roll=document.getElementById('b-roll'); roll.textContent='';
+  [...String(str)].forEach((ch,idx)=>{
+    const span=document.createElement('span'); span.className='b-roll'; span.style.display='inline-block';
+    span.textContent=ch; span.style.transform='translateY(1em)'; span.style.opacity='0';
+    span.style.transition=`transform .5s cubic-bezier(.2,1.5,.4,1) ${idx*80+120}ms, opacity .4s ${idx*80+120}ms`;
+    roll.appendChild(span);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{span.style.transform='translateY(0)';span.style.opacity='1';}));
+  });
+  document.querySelector('.b-tablewrap').style.setProperty('font-size', str.length>2? 'clamp(30px,10vw,52px)':'clamp(46px,15vw,72px)');
+}
+
+/* gold particle burst */
+function pulseBurst(wx,wy){
+  const p=screenPos(wx,wy); const N=10;
+  for(let i=0;i<N;i++){
+    const d=document.createElement('div');
+    const ang=Math.PI*2*i/N + Math.random(), dist=26+Math.random()*30;
+    d.style.cssText=`position:fixed;left:${p.x}px;top:${p.y}px;width:6px;height:6px;border-radius:50%;
+      background:radial-gradient(circle,#fff3cf,#e0b95c);z-index:8;pointer-events:none;box-shadow:0 0 8px #f2d692;
+      transform:translate(-50%,-50%);transition:transform .7s cubic-bezier(.1,.7,.3,1),opacity .7s;`;
+    document.body.appendChild(d);
+    requestAnimationFrame(()=>{ d.style.transform=`translate(${Math.cos(ang)*dist-3}px,${Math.sin(ang)*dist-3}px) scale(0)`; d.style.opacity='0'; });
+    setTimeout(()=>d.remove(),750);
+  }
+}
+
+/* ============================================================= SEARCH ==== */
+function wireSearch(){
+  const q=document.getElementById('q'), results=document.getElementById('results'),
+        ghostTyped=document.getElementById('ghost-typed'), ghostRest=document.getElementById('ghost-rest'),
+        hint=document.getElementById('hint');
+  let sel=[];
+  function render(){
+    const raw=q.value, val=norm(raw);
+    ghostTyped.textContent=''; ghostRest.textContent='';
+    if(!val){ results.innerHTML=''; hint.textContent='e.g. type “Ach” for Achillea'; sel=[]; return; }
+    hint.textContent='';
+    // rank: startsWith first, then includes
+    const seen=new Set(), starts=[], incl=[];
+    NAME_INDEX.forEach(n=>{
+      if(seen.has(n.party.groupId)) return;
+      const i=n.key.indexOf(val);
+      if(i===0){ starts.push({n,i}); seen.add(n.party.groupId); }
+      else if(i>0){ incl.push({n,i}); seen.add(n.party.groupId); }
+    });
+    // ghost autocomplete from best startsWith
+    if(starts.length){ const best=starts[0].n; ghostTyped.textContent=raw; ghostRest.textContent=best.full.slice(raw.length); }
+    sel=[...starts,...incl].slice(0,8);
+    if(!sel.length){ results.innerHTML=`<div class="noresult">No match — try a first or last name</div>`; return; }
+    results.innerHTML = sel.map(({n},idx)=>{
+      const p=n.party;
+      const nm = highlight(joinNames(p.names), val);
+      const color = catColor(p.category);
+      const tstr = p.tableNums.length>1? 'Tables '+p.tableNums.join(' & ') : 'Table '+p.tableNums[0];
+      return `<div class="card" data-i="${idx}" style="animation-delay:${idx*45}ms">
+        <span class="pip" style="color:${color}"></span>
+        <div class="who"><div class="nm">${nm}</div><div class="cat">${escapeHtml(p.category)}</div></div>
+        <div class="go">${tstr} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      </div>`;
+    }).join('');
+    [...results.querySelectorAll('.card')].forEach(el=>{
+      el.onclick=()=>{ const p=sel[+el.dataset.i].n.party; q.blur(); reveal(p); };
+    });
+  }
+  q.addEventListener('input', render);
+  q.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ if(sel[0]){ q.blur(); reveal(sel[0].n.party);} }
+    else if((e.key==='Tab'||e.key==='ArrowRight') && document.getElementById('ghost-rest').textContent){ e.preventDefault(); q.value=sel[0].n.full; render(); }
+  });
+  render();
+}
+function highlight(text,val){
+  const idx=norm(text).indexOf(val); if(idx<0||!val) return escapeHtml(text);
+  return escapeHtml(text.slice(0,idx))+'<mark>'+escapeHtml(text.slice(idx,idx+val.length))+'</mark>'+escapeHtml(text.slice(idx+val.length));
+}
+function catColor(cat){ return {'Friends':'#c98b87','Family':'#8fb08f','Cousins':'#c9a557','Family Friends':'#9d8ec9','Bride & Groom':'#f2d692'}[cat]||'#c9a557'; }
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================================================= AUDIO ==== */
+const audio = (function(){
+  let ctx=null, muted=localStorage.getItem('ds-mute')==='1', waltzTimer=null, master=null, ok=true;
+  function ensure(){ if(!ok) return false;
+    try{
+      if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ok=false;return false;}
+        ctx=new AC(); master=ctx.createGain(); master.gain.value=muted?0:0.9; master.connect(ctx.destination); }
+      if(ctx.state==='suspended') ctx.resume();
+      return true;
+    }catch(e){ ok=false; return false; }
+  }
+  const guard=fn=>function(){ try{ if(!ensure()) return; return fn.apply(null,arguments);}catch(e){} };
+  function note(freq,t,dur,type,vol,decay){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type||'triangle'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||.18,t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+(decay||dur));
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+  }
+  // an original minor-key music-box waltz motif (not a copyrighted tune)
+  const A=220, mel=[ // [semitone from A3, beats]
+    [12,1],[16,.5],[19,.5],[24,1.5],[19,.5],[16,1],[17,1],[12,1],
+    [14,1],[12,.5],[9,.5],[7,1.5],[9,.5],[12,1],[16,2]
+  ];
+  const st=n=>A*Math.pow(2,n/12);
+  function startWaltz(){ if(waltzTimer) return; let bar=0;
+    const beat=0.36;
+    function schedule(){
+      const base=ctx.currentTime+0.05; let t=base;
+      mel.forEach(([n,b])=>{ note(st(n),t,b*beat*.9,'triangle',.16,b*beat*.9);
+        // waltz bass oom-pah-pah every beat
+        t+=b*beat; });
+      // bass line
+      let tb=base; const bl=[[-12,'oom'],[0,'pah'],[3,'pah']];
+      for(let i=0;i<12;i++){ const [n]=bl[i%3]; note(st(n)/2,tb,beat*.5,'sine',i%3?.06:.11,beat*.5); tb+=beat; }
+      bar++;
+    }
+    schedule();
+    waltzTimer=setInterval(schedule, mel.reduce((s,m)=>s+m[1],0)*0.36*1000);
+  }
+  function stopWaltz(){ if(waltzTimer){ clearInterval(waltzTimer); waltzTimer=null; } }
+  function arrival(){ const t=ctx.currentTime+0.02;
+    // harp glissando up
+    const scale=[0,2,4,5,7,9,11,12,14,16,19,24];
+    scale.forEach((n,i)=>note(st(n+7),t+i*0.045,.5,'triangle',.12,.5));
+    // sparkle chord
+    [12,16,19,24].forEach((n,i)=>note(st(n+7),t+0.55,1.4,'sine',.1,1.4));
+    setTimeout(stopWaltz, 400);
+  }
+  function chime(i){ if(!ctx) return; const t=ctx.currentTime+0.01; note(st(24+[0,4,7,12,4][i%5]),t,.4,'sine',.14,.4); }
+  function toggle(){ muted=!muted; localStorage.setItem('ds-mute',muted?'1':'0'); if(master) master.gain.value=muted?0:0.9; return muted; }
+  function isMuted(){ return muted; }
+  return {startWaltz:guard(startWaltz),stopWaltz,arrival:guard(arrival),chime:guard(chime),toggle,isMuted,ensure};
+})();
+
+/* ============================================================= DUST ==== */
+function startDust(){
+  const cv=document.getElementById('dust'), c=cv.getContext('2d'); let W,H,parts=[];
+  function size(){ W=cv.width=innerWidth*devicePixelRatio; H=cv.height=innerHeight*devicePixelRatio; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
+  size();
+  const N=Math.min(46, Math.floor(innerWidth/12));
+  for(let i=0;i<N;i++) parts.push({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.6+0.5)*devicePixelRatio,s:Math.random()*0.25+0.05,a:Math.random()*.5+.2,ph:Math.random()*6});
+  function frame(t){
+    c.clearRect(0,0,W,H);
+    parts.forEach(p=>{ p.y-=p.s; p.x+=Math.sin(t/2600+p.ph)*0.15; if(p.y<-4){p.y=H+4;p.x=Math.random()*W;}
+      const tw=p.a*(0.6+0.4*Math.sin(t/800+p.ph));
+      c.beginPath(); c.arc(p.x,p.y,p.r,0,7); c.fillStyle=`rgba(242,214,146,${tw})`; c.shadowBlur=6*devicePixelRatio; c.shadowColor='rgba(242,214,146,.6)'; c.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  addEventListener('resize',size);
+}
+
+/* ============================================================= UI WIRE == */
+document.getElementById('mute').onclick=()=>{ const m=audio.toggle(); document.getElementById('mute-ico').innerHTML = m
+  ? '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>'
+  : '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/>'; };
+document.getElementById('replay').onclick=()=>{ if(currentParty){ document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on'); reveal(currentParty);} };
+document.getElementById('back').onclick=()=>{
+  document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on');
+  clearFloaters(); audio.stopWaltz(); document.getElementById('vig').classList.remove('on');
+  document.getElementById('search-screen').classList.remove('gone');
+  fitRoom(false); document.getElementById('q').value=''; document.getElementById('q').dispatchEvent(new Event('input'));
+};
+
+// keep floaters pinned to seats if user pans/zooms after arrival (pinch)
+let pinch=null;
+const wrap=document.getElementById('stage-wrap');
+wrap.addEventListener('touchstart',e=>{ if(!document.getElementById('banner').classList.contains('up')) return;
+  if(e.touches.length===2){ pinch={d:dist(e.touches),k:cam.k,cx:(e.touches[0].clientX+e.touches[1].clientX)/2,cy:(e.touches[0].clientY+e.touches[1].clientY)/2,camx:cam.x,camy:cam.y}; }
+  else if(e.touches.length===1){ pinch={pan:true,x:e.touches[0].clientX,y:e.touches[0].clientY,camx:cam.x,camy:cam.y}; }
+},{passive:true});
+wrap.addEventListener('touchmove',e=>{ if(!pinch) return;
+  if(pinch.pan&&e.touches.length===1){ cam.x=pinch.camx+(e.touches[0].clientX-pinch.x); cam.y=pinch.camy+(e.touches[0].clientY-pinch.y); }
+  else if(e.touches.length===2){ const nd=dist(e.touches); const k=Math.max(0.3,Math.min(5,pinch.k*nd/pinch.d));
+    cam.k=k; cam.x=pinch.cx-(pinch.cx-pinch.camx)*(k/pinch.k); cam.y=pinch.cy-(pinch.cy-pinch.camy)*(k/pinch.k); }
+  applyCam(); repositionFloaters();
+},{passive:true});
+wrap.addEventListener('touchend',()=>{pinch=null;},{passive:true});
+function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY); }
+addEventListener('resize',()=>{ if(!document.getElementById('search-screen').classList.contains('gone')) fitRoom(true); });
+
+boot();
+</script>
+</body>
+</html>

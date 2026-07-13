@@ -1,0 +1,1443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wedding Seating — Dima & Susie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="lib/react.production.min.js"></script>
+<script src="lib/react-dom.production.min.js"></script>
+<script src="lib/babel.min.js"></script>
+<script>
+  Babel.registerPreset('react-classic', {
+    presets: [[Babel.availablePresets['react'], { runtime: 'classic' }]]
+  });
+</script>
+<style>
+  :root {
+    --bg: #ece4f0;
+    --paper: #fbf8f3;
+    --ink: #2a2a2a;
+    --muted: #7a7268;
+    --line: #d9cfc1;
+    --accent: #6b8a6e;
+    --accent-2: #c98b87;
+    --gold: #b08d4f;
+    --danger: #c0584d;
+    --plum: #3A2342;
+    --claret: #7A2E3B;
+    --shadow: 0 10px 30px rgba(60,40,20,.08), 0 2px 6px rgba(60,40,20,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; letter-spacing: .01em; margin: 0; }
+
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+  }
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 28px;
+    background: linear-gradient(180deg, var(--paper), rgba(251,248,243,.85));
+    border-bottom: 1px solid var(--line);
+    z-index: 5;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand h1 { font-size: 24px; }
+  .brand small { color: var(--muted); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .stats { display: flex; gap: 18px; color: var(--muted); font-size: 13px; }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .actions button {
+    background: transparent; border: 1px solid var(--line); padding: 7px 12px; border-radius: 999px;
+    font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; margin-left: 6px;
+    transition: all .15s ease;
+  }
+  .actions button:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* ---------- FLOOR ---------- */
+  .floor-wrap {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(122,46,59,.10), transparent 60%),
+      var(--bg);
+  }
+  .floor-wrap.panning { cursor: grabbing; }
+  .floor-wrap.dragging { cursor: grabbing; }
+  .drag-ghost {
+    position: fixed; z-index: 200; pointer-events: none;
+    background: var(--paper); color: var(--ink);
+    border: 2px solid var(--ink); border-left-width: 5px;
+    padding: 3px 9px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    box-shadow: 0 8px 20px rgba(60,40,20,.22);
+    max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .world {
+    position: absolute; top: 0; left: 0;
+    width: 1000px; height: 1600px;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  .floor-art { position: absolute; inset: 0; width: 1000px; height: 1600px; pointer-events: none; }
+  .floor-art svg { display: block; width: 1000px; height: 1600px; }
+  .hitlayer { position: absolute; inset: 0; width: 1000px; height: 1600px; pointer-events: none;
+    user-select: none; -webkit-user-select: none; }
+
+  .seat-node {
+    position: absolute; width: 28px; height: 28px;
+    border-radius: 50%; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto;
+    border: 2.4px solid transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .seat-node.occupied { cursor: grab; background: rgba(255,255,255,.02); }
+  .seat-node.occupied:active { cursor: grabbing; }
+  .seat-node.solo { animation: pulse .9s ease infinite alternate; }
+  @keyframes pulse { from { box-shadow: 0 0 0 0 rgba(201,139,135,.7); } to { box-shadow: 0 0 0 4px rgba(201,139,135,.35); } }
+  .seat-node.seat-drop { background: rgba(107,138,110,.35); border-color: var(--accent); }
+  .seat-name {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 8px;
+    color: #2a2a2a; pointer-events: none; user-select: none; white-space: nowrap;
+    line-height: 1;
+  }
+
+  .table-handle {
+    position: absolute; width: 54px; height: 54px;
+    border-radius: 50%; box-sizing: border-box;
+    pointer-events: auto; cursor: grab;
+    border: 2.5px solid transparent;
+    transition: border-color .12s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .table-handle:hover { border-color: rgba(122,46,59,.5); }
+  .table-handle:active { cursor: grabbing; }
+  .table-handle.table-drop { border-color: var(--accent); border-width: 4px; }
+
+  .zoom-controls {
+    position: absolute; bottom: 18px; left: 18px; z-index: 10;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .zoom-controls button {
+    width: 38px; height: 38px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--paper);
+    font-size: 17px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow);
+  }
+  .zoom-controls button:hover { color: var(--ink); border-color: var(--ink); }
+  .zoom-hint {
+    position: absolute; bottom: 18px; right: 18px; z-index: 10;
+    font-size: 11px; color: var(--muted);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; box-shadow: var(--shadow);
+  }
+  .zoom-level {
+    position: absolute; top: 14px; left: 18px; z-index: 10;
+    font-size: 11px; color: var(--muted);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 11px; box-shadow: var(--shadow); font-weight: 600;
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar {
+    background: var(--paper);
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .side-head { padding: 14px 20px 6px; }
+  .side-head h2 { font-size: 21px; }
+  .side-head .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .filter { margin: 8px 20px 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter button {
+    background: transparent; border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px;
+    font: inherit; font-size: 11px; color: var(--muted); cursor: pointer;
+  }
+  .filter button.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .groups { flex: 1; overflow-y: auto; padding: 10px 16px 30px; min-height: 0; }
+  .cat-section { margin-bottom: 14px; }
+  .cat-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; color: var(--muted); margin: 8px 4px 6px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 4px;
+  }
+  .cat-title .pill { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .group { background: #fff; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; overflow: hidden; transition: all .12s ease; }
+  .group:hover { border-color: var(--accent); box-shadow: 0 4px 10px rgba(60,40,20,.06); }
+  .group.seated { background: #f4efe6; }
+  .g-head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: grab; }
+  .group.seated .g-head { opacity: .55; }
+  .g-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gc, var(--accent)); flex-shrink: 0; }
+  .g-label { flex: 1; min-width: 0; font-size: 13px; line-height: 1.3; }
+  .g-where { font-size: 10px; color: var(--accent); margin-top: 1px; letter-spacing: .03em; }
+  .g-where.partial { color: var(--accent-2); }
+  .g-badge { background: var(--ink); color: var(--paper); border-radius: 999px; font-size: 11px; padding: 2px 7px; font-weight: 600; white-space: nowrap; }
+  .group.seated .g-badge { background: var(--accent); }
+  .g-expand { border: 0; background: transparent; cursor: pointer; color: var(--muted); font-size: 11px; padding: 2px 4px; flex-shrink: 0; transition: transform .15s ease; }
+  .g-expand.open { transform: rotate(90deg); }
+  .g-members { border-top: 1px dashed var(--line); padding: 4px 10px 8px; }
+  .member { display: flex; align-items: center; gap: 6px; padding: 3px 2px; font-size: 12px; border-radius: 6px; cursor: grab; }
+  .member:hover { background: rgba(107,138,110,.07); }
+  .member .m-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member .m-name input { font: inherit; width: 100%; border: 0; outline: none; background: #fff; border-bottom: 1px dashed var(--accent); padding: 1px 2px; }
+  .member .m-at { font-size: 10px; color: var(--accent); white-space: nowrap; }
+  .member .m-edit { border: 0; background: transparent; cursor: pointer; font-size: 11px; color: var(--muted); opacity: 0; padding: 1px 3px; }
+  .member:hover .m-edit { opacity: 1; }
+  .member .m-edit:hover { color: var(--ink); }
+  .groups::-webkit-scrollbar { width: 8px; }
+  .groups::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  .hint { font-size: 11px; color: var(--muted); padding: 8px 20px 10px; border-top: 1px solid var(--line); background: #f1ebdf; line-height: 1.5; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    padding: 9px 18px; border-radius: 999px; font-size: 12.5px;
+    box-shadow: var(--shadow); z-index: 100; animation: toastIn .2s ease; pointer-events: none;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script id="floor-svg" type="text/plain">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title>Wedding Reception — Seating Plan</title>
+  <defs>
+    <linearGradient id="stageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7A2E3B"></stop>
+      <stop offset="100%" stop-color="#5C1F2A"></stop>
+    </linearGradient>
+    <linearGradient id="voidGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3A2C31"></stop>
+      <stop offset="100%" stop-color="#241B1F"></stop>
+    </linearGradient>
+    <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.1" fill="#DDD6CB"></circle>
+    </pattern>
+    <pattern id="herring" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#D8C3A3"></rect>
+      <path d="M0 10 L20 30 M0 30 L20 50 M0 -10 L20 10" stroke="#A98F6C" stroke-width="1.1" opacity="0.4"></path>
+      <path d="M20 30 L40 10 M20 50 L40 30 M20 10 L40 -10" stroke="#A98F6C" stroke-width="1.1" opacity="0.4"></path>
+      <path d="M0 0 L20 20 M0 20 L20 40 M0 40 L20 60 M0 -20 L20 0" stroke="#EBDCC2" stroke-width="1.1" opacity="0.5"></path>
+      <path d="M20 20 L40 0 M20 40 L40 20 M20 60 L40 40 M20 0 L40 -20" stroke="#EBDCC2" stroke-width="1.1" opacity="0.5"></path>
+    </pattern>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#43363A" flood-opacity="0.14"></feDropShadow>
+    </filter>
+    <filter id="zoneShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#43363A" flood-opacity="0.16"></feDropShadow>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1600" fill="#3A2342"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="#F3F0EB"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="url(#dots)"></rect>
+  <rect x="14" y="14" width="972" height="1572" rx="26" fill="none" stroke="#3A2342" stroke-width="3"></rect>
+  <rect x="21" y="21" width="958" height="1558" rx="20" fill="none" stroke="#3A2342" stroke-width="1" opacity="0.35"></rect>
+  <g id="stage">
+    <rect x="311" y="45" width="388" height="7" rx="3" fill="#B08D4F"></rect>
+    <path d="M313 55 L697 55 Q705 55 705 63 L705 130 Q705 150 685 150 L325 150 Q305 150 305 130 L305 63 Q305 55 313 55 Z" fill="url(#stageGrad)" filter="url(#zoneShadow)"></path>
+    <text font-weight="600" text-anchor="middle" x="505" y="110" font-size="15" letter-spacing="5" fill="#F3E4D2">STAGE</text>
+    <line x1="461" y1="128" x2="549" y2="128" stroke="#B08D4F" stroke-width="1.6" opacity="0.7"></line>
+  </g>
+  <g id="cakes-table">
+    <circle cx="150" cy="128" r="50" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" filter="url(#softShadow)"></circle>
+    <g stroke="#7A2E3B" stroke-width="1.8" fill="none" stroke-linecap="round">
+      <rect x="136" y="120" width="28" height="12" rx="3"></rect>
+      <rect x="142" y="110" width="16" height="10" rx="2.5"></rect>
+      <circle cx="150" cy="105" r="2.6" fill="#7A2E3B" stroke="none"></circle>
+      <line x1="133" y1="136" x2="167" y2="136"></line>
+      <line x1="150" y1="136" x2="150" y2="143"></line>
+    </g>
+    <text font-weight="600" text-anchor="middle" x="150" y="205" font-size="12" letter-spacing="3.5" fill="#9A8D89">CAKES · SWEETS</text>
+  </g>
+  <g id="dance-floor">
+    <rect x="296" y="177" width="423" height="722" rx="22" fill="url(#herring)" stroke="#A98F6C" stroke-width="1.6" filter="url(#zoneShadow)"></rect>
+    <rect x="310" y="191" width="395" height="694" rx="14" fill="none" stroke="#B08D4F" stroke-width="1.3" opacity="0.75"></rect>
+    <g transform="translate(507,510)" fill="none" stroke="#B08D4F">
+      <circle r="46" stroke-width="1.4" opacity="0.85"></circle>
+      <circle r="36" stroke-width="0.9" opacity="0.55"></circle>
+      <circle r="4.5" fill="#B08D4F" stroke="none" opacity="0.9"></circle>
+    </g>
+    <text font-weight="600" text-anchor="middle" x="507" y="600" font-size="14" letter-spacing="4" fill="#7C6848">DANCE FLOOR</text>
+  </g>
+  <g id="void-stairs">
+    <rect x="40" y="1143" width="585" height="104" rx="18" fill="url(#voidGrad)" filter="url(#zoneShadow)"></rect>
+    <line x1="370" y1="1159" x2="370" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.55"></line>
+    <line x1="400" y1="1159" x2="400" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.49"></line>
+    <line x1="430" y1="1159" x2="430" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.43"></line>
+    <line x1="460" y1="1159" x2="460" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.37"></line>
+    <line x1="490" y1="1159" x2="490" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.31"></line>
+    <line x1="520" y1="1159" x2="520" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.25"></line>
+    <line x1="550" y1="1159" x2="550" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.19"></line>
+    <line x1="580" y1="1159" x2="580" y2="1233" stroke="#C7A970" stroke-width="1.4" opacity="0.13"></line>
+    <text font-weight="600" text-anchor="middle" x="185" y="1201" font-size="13" letter-spacing="4" fill="#D5C29B">VOID · STAIRS</text>
+  </g>
+  <g id="table-12">
+    <circle id="table-12-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="154" cy="246" r="14"></circle>
+    <circle id="table-12-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="201.6" cy="260" r="14"></circle>
+    <circle id="table-12-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="234" cy="297.4" r="14"></circle>
+    <circle id="table-12-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="241.1" cy="346.5" r="14"></circle>
+    <circle id="table-12-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="220.5" cy="391.6" r="14"></circle>
+    <circle id="table-12-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="178.8" cy="418.4" r="14"></circle>
+    <circle id="table-12-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="129.2" cy="418.4" r="14"></circle>
+    <circle id="table-12-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="87.5" cy="391.6" r="14"></circle>
+    <circle id="table-12-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="66.9" cy="346.5" r="14"></circle>
+    <circle id="table-12-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="74" cy="297.4" r="14"></circle>
+    <circle id="table-12-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="106.4" cy="260" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="154" cy="334" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-12-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="154" y="343">12</text></g>
+  </g>
+  <g id="table-2">
+    <circle id="table-2-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="159" cy="472" r="14"></circle>
+    <circle id="table-2-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="204.6" cy="483.4" r="14"></circle>
+    <circle id="table-2-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="238" cy="514.5" r="14"></circle>
+    <circle id="table-2-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="250.2" cy="557" r="14"></circle>
+    <circle id="table-2-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="238" cy="599.5" r="14"></circle>
+    <circle id="table-2-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="204.6" cy="630.6" r="14"></circle>
+    <circle id="table-2-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="159" cy="642" r="14"></circle>
+    <circle id="table-2-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="113.4" cy="630.6" r="14"></circle>
+    <circle id="table-2-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="80" cy="599.5" r="14"></circle>
+    <circle id="table-2-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="67.8" cy="557" r="14"></circle>
+    <circle id="table-2-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="80" cy="514.5" r="14"></circle>
+    <circle id="table-2-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="113.4" cy="483.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="159" cy="557" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-2-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="159" y="566">2</text></g>
+  </g>
+  <g id="table-3">
+    <circle id="table-3-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="162" cy="697" r="14"></circle>
+    <circle id="table-3-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="205.5" cy="707.1" r="14"></circle>
+    <circle id="table-3-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="239" cy="735" r="14"></circle>
+    <circle id="table-3-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="254.9" cy="774.4" r="14"></circle>
+    <circle id="table-3-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="249.5" cy="816.2" r="14"></circle>
+    <circle id="table-3-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="224.1" cy="850.9" r="14"></circle>
+    <circle id="table-3-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="184.4" cy="870.4" r="14"></circle>
+    <circle id="table-3-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="139.6" cy="870.4" r="14"></circle>
+    <circle id="table-3-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="99.9" cy="850.9" r="14"></circle>
+    <circle id="table-3-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="74.5" cy="816.2" r="14"></circle>
+    <circle id="table-3-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="69.1" cy="774.4" r="14"></circle>
+    <circle id="table-3-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="735" r="14"></circle>
+    <circle id="table-3-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.5" cy="707.1" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="162" cy="785" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-3-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="162" y="794">3</text></g>
+  </g>
+  <g id="table-4">
+    <circle id="table-4-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="164" cy="931" r="14"></circle>
+    <circle id="table-4-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="209.6" cy="942.4" r="14"></circle>
+    <circle id="table-4-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="243" cy="973.5" r="14"></circle>
+    <circle id="table-4-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="255.2" cy="1016" r="14"></circle>
+    <circle id="table-4-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="243" cy="1058.5" r="14"></circle>
+    <circle id="table-4-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="209.6" cy="1089.6" r="14"></circle>
+    <circle id="table-4-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="164" cy="1101" r="14"></circle>
+    <circle id="table-4-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.4" cy="1089.6" r="14"></circle>
+    <circle id="table-4-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="1058.5" r="14"></circle>
+    <circle id="table-4-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="72.8" cy="1016" r="14"></circle>
+    <circle id="table-4-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="85" cy="973.5" r="14"></circle>
+    <circle id="table-4-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="118.4" cy="942.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="164" cy="1016" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-4-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="164" y="1025">4</text></g>
+  </g>
+  <g id="table-5">
+    <circle id="table-5-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="396" cy="937" r="14"></circle>
+    <circle id="table-5-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="441.6" cy="948.4" r="14"></circle>
+    <circle id="table-5-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="475" cy="979.5" r="14"></circle>
+    <circle id="table-5-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="487.2" cy="1022" r="14"></circle>
+    <circle id="table-5-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="475" cy="1064.5" r="14"></circle>
+    <circle id="table-5-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="441.6" cy="1095.6" r="14"></circle>
+    <circle id="table-5-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="396" cy="1107" r="14"></circle>
+    <circle id="table-5-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="350.4" cy="1095.6" r="14"></circle>
+    <circle id="table-5-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="317" cy="1064.5" r="14"></circle>
+    <circle id="table-5-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="304.8" cy="1022" r="14"></circle>
+    <circle id="table-5-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="317" cy="979.5" r="14"></circle>
+    <circle id="table-5-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="350.4" cy="948.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="396" cy="1022" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-5-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="396" y="1031">5</text></g>
+  </g>
+  <g id="table-6">
+    <circle id="table-6-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="630" cy="940" r="14"></circle>
+    <circle id="table-6-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="681.7" cy="955.7" r="14"></circle>
+    <circle id="table-6-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="713.7" cy="996.7" r="14"></circle>
+    <circle id="table-6-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="713.7" cy="1047.3" r="14"></circle>
+    <circle id="table-6-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="681.7" cy="1088.3" r="14"></circle>
+    <circle id="table-6-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="630" cy="1104" r="14"></circle>
+    <circle id="table-6-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="578.3" cy="1088.3" r="14"></circle>
+    <circle id="table-6-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="546.3" cy="1047.3" r="14"></circle>
+    <circle id="table-6-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="546.3" cy="996.7" r="14"></circle>
+    <circle id="table-6-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="578.3" cy="955.7" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="630" cy="1022" rx="62" ry="60" filter="url(#softShadow)"></ellipse>
+    <g id="table-6-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="630" y="1031">6</text></g>
+  </g>
+  <g id="table-7">
+    <circle id="table-7-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="65" r="14"></circle>
+    <circle id="table-7-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="900" cy="78" r="14"></circle>
+    <circle id="table-7-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="932.8" cy="112.9" r="14"></circle>
+    <circle id="table-7-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="939.9" cy="158.7" r="14"></circle>
+    <circle id="table-7-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="919.1" cy="200.7" r="14"></circle>
+    <circle id="table-7-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="877" cy="225.7" r="14"></circle>
+    <circle id="table-7-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="827" cy="225.7" r="14"></circle>
+    <circle id="table-7-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="784.9" cy="200.7" r="14"></circle>
+    <circle id="table-7-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764.1" cy="158.7" r="14"></circle>
+    <circle id="table-7-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="771.2" cy="112.9" r="14"></circle>
+    <circle id="table-7-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="804" cy="78" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="147" rx="62" ry="60" filter="url(#softShadow)"></ellipse>
+    <g id="table-7-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="156">7</text></g>
+  </g>
+  <g id="table-8">
+    <circle id="table-8-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="285" r="14"></circle>
+    <circle id="table-8-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="905.6" cy="301.2" r="14"></circle>
+    <circle id="table-8-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="938.7" cy="343.7" r="14"></circle>
+    <circle id="table-8-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="938.7" cy="396.3" r="14"></circle>
+    <circle id="table-8-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="905.6" cy="438.8" r="14"></circle>
+    <circle id="table-8-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="455" r="14"></circle>
+    <circle id="table-8-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="798.4" cy="438.8" r="14"></circle>
+    <circle id="table-8-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="765.3" cy="396.3" r="14"></circle>
+    <circle id="table-8-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="765.3" cy="343.7" r="14"></circle>
+    <circle id="table-8-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="798.4" cy="301.2" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="370" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-8-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="379">8</text></g>
+  </g>
+  <g id="table-9">
+    <circle id="table-9-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="503" r="14"></circle>
+    <circle id="table-9-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="514.4" r="14"></circle>
+    <circle id="table-9-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="545.5" r="14"></circle>
+    <circle id="table-9-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="943.2" cy="588" r="14"></circle>
+    <circle id="table-9-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="630.5" r="14"></circle>
+    <circle id="table-9-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="661.6" r="14"></circle>
+    <circle id="table-9-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="673" r="14"></circle>
+    <circle id="table-9-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="661.6" r="14"></circle>
+    <circle id="table-9-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="630.5" r="14"></circle>
+    <circle id="table-9-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="760.8" cy="588" r="14"></circle>
+    <circle id="table-9-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="545.5" r="14"></circle>
+    <circle id="table-9-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="514.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="588" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-9-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="597">9</text></g>
+  </g>
+  <g id="table-10">
+    <circle id="table-10-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="721" r="14"></circle>
+    <circle id="table-10-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="895.5" cy="731.1" r="14"></circle>
+    <circle id="table-10-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="929" cy="759" r="14"></circle>
+    <circle id="table-10-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="944.9" cy="798.4" r="14"></circle>
+    <circle id="table-10-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="939.5" cy="840.2" r="14"></circle>
+    <circle id="table-10-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="914.1" cy="874.9" r="14"></circle>
+    <circle id="table-10-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="874.4" cy="894.4" r="14"></circle>
+    <circle id="table-10-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="829.6" cy="894.4" r="14"></circle>
+    <circle id="table-10-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="789.9" cy="874.9" r="14"></circle>
+    <circle id="table-10-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764.5" cy="840.2" r="14"></circle>
+    <circle id="table-10-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="759.1" cy="798.4" r="14"></circle>
+    <circle id="table-10-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="775" cy="759" r="14"></circle>
+    <circle id="table-10-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="808.5" cy="731.1" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="809" rx="67" ry="66" filter="url(#softShadow)"></ellipse>
+    <g id="table-10-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="818">10</text></g>
+  </g>
+  <g id="table-11">
+    <circle id="table-11-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="945" r="14"></circle>
+    <circle id="table-11-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="956.4" r="14"></circle>
+    <circle id="table-11-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="987.5" r="14"></circle>
+    <circle id="table-11-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="943.2" cy="1030" r="14"></circle>
+    <circle id="table-11-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="931" cy="1072.5" r="14"></circle>
+    <circle id="table-11-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="897.6" cy="1103.6" r="14"></circle>
+    <circle id="table-11-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="1115" r="14"></circle>
+    <circle id="table-11-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="1103.6" r="14"></circle>
+    <circle id="table-11-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="1072.5" r="14"></circle>
+    <circle id="table-11-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="760.8" cy="1030" r="14"></circle>
+    <circle id="table-11-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="773" cy="987.5" r="14"></circle>
+    <circle id="table-11-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="806.4" cy="956.4" r="14"></circle>
+    <ellipse class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" cx="852" cy="1030" rx="65" ry="63" filter="url(#softShadow)"></ellipse>
+    <g id="table-11-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="1039">11</text></g>
+  </g>
+  <g id="table-13">
+    <circle id="table-13-seat-1" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="852" cy="1150" r="14"></circle>
+    <circle id="table-13-seat-2" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="901" cy="1164.9" r="14"></circle>
+    <circle id="table-13-seat-3" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="933.4" cy="1204.5" r="14"></circle>
+    <circle id="table-13-seat-4" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1255.5" r="14"></circle>
+    <circle id="table-13-seat-5" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1307.3" r="14"></circle>
+    <circle id="table-13-seat-6" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1359.1" r="14"></circle>
+    <circle id="table-13-seat-7" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1411" r="14"></circle>
+    <circle id="table-13-seat-8" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="940" cy="1462.8" r="14"></circle>
+    <circle id="table-13-seat-9" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="933.2" cy="1513.8" r="14"></circle>
+    <circle id="table-13-seat-10" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="900.8" cy="1553.2" r="14"></circle>
+    <circle id="table-13-seat-11" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="851.9" cy="1568" r="14"></circle>
+    <circle id="table-13-seat-12" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="803" cy="1553.1" r="14"></circle>
+    <circle id="table-13-seat-13" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="770.6" cy="1513.5" r="14"></circle>
+    <circle id="table-13-seat-14" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1462.6" r="14"></circle>
+    <circle id="table-13-seat-15" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1410.8" r="14"></circle>
+    <circle id="table-13-seat-16" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1358.9" r="14"></circle>
+    <circle id="table-13-seat-17" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1307.1" r="14"></circle>
+    <circle id="table-13-seat-18" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="764" cy="1255.2" r="14"></circle>
+    <circle id="table-13-seat-19" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="770.7" cy="1204.3" r="14"></circle>
+    <circle id="table-13-seat-20" class="seat" fill="#FFFFFF" stroke="#E2DCD2" stroke-width="1.6" cx="803.1" cy="1164.8" r="14"></circle>
+    <rect class="tabletop" fill="#FCFAF4" stroke="#D5C29B" stroke-width="1.6" x="790" y="1176" width="124" height="366" rx="62" ry="62" filter="url(#softShadow)"></rect>
+    <g id="table-13-label"><text class="tnum" font-size="26" font-weight="600" fill="#7A2E3B" text-anchor="middle" x="852" y="1368">13</text></g>
+  </g>
+</svg>
+</script>
+
+<script type="text/babel" data-presets="react-classic">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+/* ---------- GUEST DATA ---------- */
+const RAW_GUESTS = [
+  ["Manny, Jo","Friends"],["Giorgio","Friends"],["Costa, Sammy","Friends"],
+  ["Sean, Lea","Friends"],["Uncle","Friends"],["Marcus, Mel","Friends"],
+  ["Vov, Stef","Friends"],["Nir, Kinjia","Friends"],["Dima, Susie","Bride & Groom"],
+  ["Bonnie, Ray","Friends"],["Jenny, Josh","Friends"],["Mama, Papa","Family"],
+  ["Aki, Hayley","Friends"],["George, Adriana","Friends"],["Dennis","Friends"],
+  ["Dima, Sasha","Friends"],["Arthur, Naz","Friends"],["Pete K","Friends"],
+  ["Papa","Friends"],["Yoav, Jade","Friends"],["Jake","Friends"],
+  ["Tuvi, Jenny","Friends"],["Prush, Nelanne","Friends"],["Jordan, Hadeel","Friends"],
+  ["Pete, Caitlin","Friends"],null,["Ofek","Friends"],
+  ["Shahaf, Caroline","Friends"],["Jamie, Helena","Friends"],["Yotam, Rachel","Friends"],
+  ["Melvin","Friends"],["Serena, Jeremy","Friends"],["Denis, Arny","Family"],
+  ["Zhenia","Family"],["Gena","Family"],["Alla, Slavik","Family"],
+  ["Leonid","Family"],["Lucy","Family"],["Michael","Cousins"],
+  ["Alla, Lev","Cousins"],["Vicky, Mark","Cousins"],
+  ["Lena, Slavik","Friends"],["Alex, Sarah","Cousins"],["Sophy, Alex","Family"],
+  ["Alexandra, Nikolay","Family Friends"],["Svetlana, Grigory","Family Friends"],
+  ["Natasha, Edik","Family Friends"],["Inna, David","Family Friends"],
+  null,["Alex, Katia","Family Friends"],
+  ["Alla, Boris","Family Friends"],["Valery, Slava","Family Friends"],
+  ["Efim, Tanya","Family Friends"],null,
+  ["Tanya, Michael","Family Friends"],["Zhanna, Igor","Family Friends"],
+  ["Dima, Lena","Family Friends"],
+  ["Marina, Rudolf","Family Friends"],
+  ["Svetlana, Roma","Family Friends"],["Diana, Roma","Family Friends"],
+  ["Stella, Pavel","Family Friends"],["Victoria, Eugene","Family Friends"],
+  ["Irina","Family Friends"],["Susie's Mum, Dad","Family"],
+  ["Andy","Family"],["Arnold, Rose, Jeanne","Family Friends"],
+  null,["Oi","Family Friends"],["Josh, Lauren","Friends"],
+  null,null,["Simon, Kate","Friends"],
+  ["Jack","Friends"],["Daniel, Natalie, Brock","Friends"],
+  ["Ty","Friends"],
+  ["Alon, Shana","Friends"],
+  ["Dados, Dadon","Friends"],
+  null,
+  ["Ed","Friends"],
+  ["Danny, Inbal","Friends"],
+  ["Freddy, Liza, Karin","Family Friends"],
+  ["Eva, Yakov","Family Friends"],
+  ["Eddy, David","Family Friends"],
+  ["Luba","Family Friends"],
+  ["Misha","Family Friends"],
+  ["Olga","Family Friends"],
+  ["Michael, Veronica, Emma","Cousins"],
+  ["Natalie, Matt","Cousins"],
+  ["Greg","Family Friends"],
+  ["Isaac","Cousins"],
+  ["Igor","Family Friends"],
+  ["AaronF","Friends"],
+];
+
+const GROUPS = RAW_GUESTS.map((entry, i) => {
+  if (!entry) return null;
+  const [name, cat] = entry;
+  const memberNames = name.split(',').map(s => s.trim()).filter(Boolean);
+  const gid = 'g' + i;
+  return { id: gid, label: name, category: cat,
+    members: memberNames.map((n, j) => ({ id: gid + '-p' + j, groupId: gid, defaultName: n })) };
+}).filter(Boolean);
+
+const GROUPS_BY_ID = Object.fromEntries(GROUPS.map(g => [g.id, g]));
+const PEOPLE = GROUPS.flatMap(g => g.members);
+const PEOPLE_BY_ID = Object.fromEntries(PEOPLE.map(p => [p.id, p]));
+const TOTAL_GUESTS = PEOPLE.length;
+
+/* ---------- PARSE SVG ---------- */
+const FLOOR_SVG = document.getElementById('floor-svg').textContent;
+const SEAT_RE = /id="table-(\d+)-seat-(\d+)"[^>]*?cx="([-\d.]+)"[^>]*?cy="([-\d.]+)"/g;
+const SEATS = [];        // {table:'table-1', num:1, cx, cy}
+const SEAT_INDEX = {};   // 'table-1' -> [{num,cx,cy}...]
+{
+  let m;
+  while ((m = SEAT_RE.exec(FLOOR_SVG)) !== null) {
+    const table = 'table-' + m[1];
+    const seat = { table, num: parseInt(m[2], 10), cx: parseFloat(m[3]), cy: parseFloat(m[4]) };
+    SEATS.push(seat);
+    (SEAT_INDEX[table] = SEAT_INDEX[table] || []).push(seat);
+  }
+}
+Object.values(SEAT_INDEX).forEach(arr => arr.sort((a, b) => a.num - b.num));
+const SEAT_POS = {};     // 'table-1' -> {1:{cx,cy},...}
+Object.entries(SEAT_INDEX).forEach(([t, arr]) => { SEAT_POS[t] = {}; arr.forEach(s => { SEAT_POS[t][s.num] = s; }); });
+
+/* table meta ordered by number */
+const TABLE_LABEL_RE = /id="table-(\d+)-label"[\s\S]*?x="([-\d.]+)"\s+y="([-\d.]+)"/g;
+const LABEL_POS = {};
+{ let m; while ((m = TABLE_LABEL_RE.exec(FLOOR_SVG)) !== null) LABEL_POS['table-' + m[1]] = { x: parseFloat(m[2]), y: parseFloat(m[3]) }; }
+
+const TABLES = Object.keys(SEAT_INDEX)
+  .sort((a, b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]))
+  .map(id => {
+    const seats = SEAT_INDEX[id];
+    const cx = seats.reduce((s, x) => s + x.cx, 0) / seats.length;
+    const cy = seats.reduce((s, x) => s + x.cy, 0) / seats.length;
+    return { id, num: parseInt(id.split('-')[1]), cap: seats.length, cx, cy };
+  });
+const TABLES_BY_ID = Object.fromEntries(TABLES.map(t => [t.id, t]));
+const TOTAL_CAPACITY = TABLES.reduce((s, t) => s + t.cap, 0);
+
+/* old slot positions (previous app) for migration mapping */
+const OLD_SLOTS = {
+  s1:[3,18], s2:[3,33], s3:[3,48], s4:[3,63],
+  s5:[82,4], s6:[82,19], s7:[82,34], s8:[82,49],
+  s9:[65,4], s10:[65,19], s11:[65,34], s12:[65,49],
+  s13:[33,82], s14:[50,82],
+};
+
+const STORAGE_V2 = 'wedding-seating-v2';
+const STORAGE_V3 = 'wedding-seating-v3';
+
+/* logical table numbering by visual position: left/right columns interleaved, top to bottom */
+const computeTableNumbers = (offsets) => {
+  const pos = TABLES.map(t => {
+    const o = (offsets && offsets[t.id]) || { dx: 0, dy: 0 };
+    return { id: t.id, x: t.cx + (o.dx || 0), y: t.cy + (o.dy || 0) };
+  });
+  const left = pos.filter(p => p.x < 500).sort((a, b) => a.y - b.y);
+  const right = pos.filter(p => p.x >= 500).sort((a, b) => a.y - b.y);
+  const map = {};
+  let n = 1;
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    if (i < left.length) map[left[i].id] = n++;
+    if (i < right.length) map[right[i].id] = n++;
+  }
+  return map;
+};
+
+const groupColor = (gid) => {
+  let h = 0;
+  for (let i = 0; i < gid.length; i++) h = (h * 31 + gid.charCodeAt(i)) % 360;
+  return `hsl(${h}, 42%, 52%)`;
+};
+const firstNameOf = (full) => (full || '').split(/\s+/)[0];
+const displayName = (names, p) => names[p.id] || p.defaultName;
+
+/* ---------- STATE ---------- */
+const emptyState = () => ({ seating: {}, names: {}, offsets: {} });
+
+/* auto-seat everyone sequentially (fallback / demo) */
+const autoSeat = () => {
+  const seating = {};
+  let ti = 0, seat = 1;
+  for (const g of GROUPS) {
+    for (const p of g.members) {
+      while (ti < TABLES.length && seat > TABLES[ti].cap) { ti++; seat = 1; }
+      if (ti >= TABLES.length) break;
+      seating[p.id] = { table: TABLES[ti].id, seat };
+      seat++;
+    }
+  }
+  return { seating, names: {}, offsets: {} };
+};
+
+/* migrate from previous app's v2 (group-per-table) onto the SVG tables */
+const migrateFromV2 = () => {
+  let v2;
+  try { v2 = JSON.parse(localStorage.getItem(STORAGE_V2)); } catch { return null; }
+  if (!v2 || !v2.seating || Object.keys(v2.seating).length === 0) return null;
+
+  // group old seating by old tableId, preserving seat order
+  const oldTables = {}; // tableId -> [{pid, seat}]
+  Object.entries(v2.seating).forEach(([pid, s]) => {
+    if (!PEOPLE_BY_ID[pid]) return;
+    (oldTables[s.tableId] = oldTables[s.tableId] || []).push({ pid, seat: s.seat });
+  });
+  const oldMeta = {}; // tableId -> {pos:[x,y], count}
+  (v2.tables || []).forEach(t => {
+    const slot = OLD_SLOTS[t.slotId] || [50, 50];
+    oldMeta[t.id] = { pos: slot };
+  });
+  const oldList = Object.entries(oldTables).map(([tid, arr]) => {
+    arr.sort((a, b) => a.seat - b.seat);
+    const pos = (oldMeta[tid] && oldMeta[tid].pos) || [50, 50];
+    return { tid, people: arr.map(x => x.pid), count: arr.length, pos };
+  });
+  if (oldList.length === 0) return null;
+
+  // new tables normalized positions
+  const newList = TABLES.map(t => ({ id: t.id, cap: t.cap, pos: [t.cx / 1000 * 100, t.cy / 1600 * 100] }));
+
+  // greedy: assign each old table to nearest new table with cap>=count (prefer exact cap)
+  const usedNew = new Set();
+  const seating = {};
+  // sort old by count desc so big tables claim exact matches first
+  oldList.sort((a, b) => b.count - a.count);
+  for (const ot of oldList) {
+    let best = null, bestScore = Infinity;
+    for (const nt of newList) {
+      if (usedNew.has(nt.id) || nt.cap < ot.count) continue;
+      const dx = nt.pos[0] - ot.pos[0], dy = nt.pos[1] - ot.pos[1];
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const capPenalty = (nt.cap - ot.count) * 40; // strongly prefer exact fit
+      const score = dist + capPenalty;
+      if (score < bestScore) { bestScore = score; best = nt; }
+    }
+    if (!best) continue;
+    usedNew.add(best.id);
+    ot.people.forEach((pid, i) => { seating[pid] = { table: best.id, seat: i + 1 }; });
+  }
+  return { seating, names: v2.names || {}, offsets: {} };
+};
+
+const loadState = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_V3);
+    if (raw) {
+      const st = JSON.parse(raw);
+      if (st && st.seating && st.names) {
+        Object.keys(st.seating).forEach(pid => { if (!PEOPLE_BY_ID[pid]) delete st.seating[pid]; });
+        if (!st.offsets) st.offsets = {};
+        // one-time patch: move Freddy, Liza, Karin (g80) to table-13
+        if (!st.patchFLK13) {
+          const g = GROUPS_BY_ID['g80'];
+          if (g) {
+            const occ = new Set(Object.entries(st.seating)
+              .filter(([pid, s]) => s.table === 'table-13' && !g.members.some(m => m.id === pid))
+              .map(([, s]) => s.seat));
+            g.members.forEach(p => {
+              let seat = 1;
+              while (occ.has(seat)) seat++;
+              st.seating[p.id] = { table: 'table-13', seat };
+              occ.add(seat);
+            });
+          }
+          st.patchFLK13 = true;
+        }
+        // one-time patch: UNDO the 12+13 oval merge — send seats 10-19 back to table-13 as 1-10.
+        if (!st.patchUnmerge1213) {
+          Object.entries(st.seating).forEach(([pid, s]) => {
+            if (s.table === 'table-12' && s.seat > 9) st.seating[pid] = { table: 'table-13', seat: s.seat - 9 };
+          });
+          st.patchUnmerge1213 = true;
+        }
+        // one-time patch: seat AaronF at table-13 (first free seat)
+        if (!st.patchAaronF13) {
+          const g = GROUPS.find(x => x.label === 'AaronF');
+          if (g && g.members[0] && !st.seating[g.members[0].id]) {
+            const occ = new Set(Object.values(st.seating).filter(s => s.table === 'table-13').map(s => s.seat));
+            let seat = 1; while (occ.has(seat)) seat++;
+            st.seating[g.members[0].id] = { table: 'table-13', seat };
+          }
+          st.patchAaronF13 = true;
+        }
+        // one-time patch: merge Table 1 into Table 13 (pill). Table-1 people become table-13 seats 12-20.
+        if (!st.patchMerge1into13) {
+          Object.entries(st.seating).forEach(([pid, s]) => {
+            if (s.table === 'table-1') st.seating[pid] = { table: 'table-13', seat: s.seat + 11 };
+          });
+          st.patchMerge1into13 = true;
+        }
+        // one-time patch: after the 1+13 pill merge, clear stale offsets for the removed ids.
+        if (!st.patchFixOffsets1213) {
+          const o = st.offsets || {};
+          if (o['table-1']) o['table-12'] = o['table-1'];
+          else delete o['table-12'];
+          delete o['table-1'];
+          delete o['table-13'];
+          st.offsets = o;
+          st.patchFixOffsets1213 = true;
+        }
+        // one-time patch: the transferred offset above was wrong for rearranged layouts and
+        // could stack table-12 on the pill — reset it; the user can now drag it anywhere.
+        if (!st.patchClear12Offset) {
+          if (st.offsets) delete st.offsets['table-12'];
+          st.patchClear12Offset = true;
+        }
+        // one-time patch: place table-12 into the ONE vacant original table spot
+        // (the position freed when table "1" was merged into the pill). Computed live
+        // against the user's actual layout, so no position guessing.
+        if (!st.patchPlace12InGap) {
+          const BASES = [[154,334],[159,557],[162,785],[164,1016],[396,1022],[630,1022],
+                         [852,147],[852,370],[852,588],[852,809],[852,1030],[852,1251],[852,1474]];
+          const occupied = [];
+          TABLES.forEach(t => {
+            if (t.id === 'table-12') return; // we're the one being placed
+            const o = (st.offsets && st.offsets[t.id]) || { dx: 0, dy: 0 };
+            const cx = t.cx + (o.dx || 0), cy = t.cy + (o.dy || 0);
+            occupied.push([cx, cy]);
+            if (t.id === 'table-13') { occupied.push([cx, cy - 115]); occupied.push([cx, cy + 115]); } // pill spans two spots
+          });
+          const vacant = BASES.filter(b => occupied.every(p => Math.hypot(p[0]-b[0], p[1]-b[1]) > 100));
+          if (vacant.length >= 1) {
+            const t12 = TABLES.find(t => t.id === 'table-12');
+            const spot = vacant[0];
+            st.offsets = st.offsets || {};
+            st.offsets['table-12'] = { dx: Math.round(spot[0] - t12.cx), dy: Math.round(spot[1] - t12.cy) };
+          }
+          st.patchPlace12InGap = true;
+        }
+        // one-time patch: move Dados & Dadon from table-8 to table-12 (first free seats)
+        if (!st.patchDados12) {
+          const g = GROUPS.find(x => x.label === 'Dados, Dadon');
+          if (g) {
+            const occ = new Set(Object.entries(st.seating)
+              .filter(([pid, s]) => s.table === 'table-12' && !g.members.some(m => m.id === pid))
+              .map(([, s]) => s.seat));
+            g.members.forEach(p => {
+              let seat = 1;
+              while (occ.has(seat)) seat++;
+              st.seating[p.id] = { table: 'table-12', seat };
+              occ.add(seat);
+            });
+          }
+          st.patchDados12 = true;
+        }
+        // reseat anyone whose seat no longer exists (e.g. a table was compressed to fewer seats)
+        const stranded = [];
+        Object.entries(st.seating).forEach(([pid, s]) => {
+          const t = TABLES_BY_ID[s.table];
+          if (!t || s.seat < 1 || s.seat > t.cap) stranded.push(pid);
+        });
+        stranded.forEach(pid => {
+          const tableId = st.seating[pid].table;
+          delete st.seating[pid];
+          const t = TABLES_BY_ID[tableId];
+          if (!t) return;
+          const occ = new Set(Object.values(st.seating).filter(x => x.table === tableId).map(x => x.seat));
+          for (let i = 1; i <= t.cap; i++) { if (!occ.has(i)) { st.seating[pid] = { table: tableId, seat: i }; break; } }
+        });
+        return st;
+      }
+    }
+  } catch {}
+  return migrateFromV2() || autoSeat();
+};
+
+/* ---------- APP ---------- */
+function App() {
+  const [state, setState] = useState(loadState);
+  const [filter, setFilter] = useState('all');
+  const [editingPersonId, setEditingPersonId] = useState(null);
+  const [soloPid, setSoloPid] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [focusReq, setFocusReq] = useState(null);
+  const toastTimer = useRef(null);
+
+  /* ---- custom pointer-based drag (robust across zoom / selection / double-clicks) ---- */
+  const [drag, setDrag] = useState(null);
+  const dragRef = useRef(null);
+  const floorApiRef = useRef(null);
+
+  const startDrag = useCallback((info, e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    const d = { ...info, sx: e.clientX, sy: e.clientY, clientX: e.clientX, clientY: e.clientY, started: false };
+    dragRef.current = d;
+    setDrag(d);
+    // attach listeners synchronously so the very first mousemove is captured (no effect-timing gap)
+    const move = (ev) => {
+      const dd = dragRef.current; if (!dd) return;
+      if (!dd.started) {
+        if (Math.abs(ev.clientX - dd.sx) < 4 && Math.abs(ev.clientY - dd.sy) < 4) return;
+        dd.started = true;
+      }
+      dd.clientX = ev.clientX; dd.clientY = ev.clientY;
+      setDrag({ ...dd });
+      if (floorApiRef.current) floorApiRef.current.hover(ev.clientX, ev.clientY);
+    };
+    const up = (ev) => {
+      const dd = dragRef.current;
+      if (dd && dd.started && floorApiRef.current) floorApiRef.current.drop(dd, ev.clientX, ev.clientY);
+      if (floorApiRef.current) floorApiRef.current.hover(null, null);
+      dragRef.current = null;
+      setDrag(null);
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  }, []);
+
+  useEffect(() => { localStorage.setItem(STORAGE_V3, JSON.stringify(state)); }, [state]);
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2200);
+  }, []);
+
+  const seatedCount = Object.keys(state.seating).length;
+  const tableNums = useMemo(() => computeTableNumbers(state.offsets), [state.offsets]);
+
+  const occupantAt = (seating, table, seat) =>
+    Object.keys(seating).find(pid => seating[pid].table === table && seating[pid].seat === seat);
+  const firstFree = (seating, table) => {
+    const cap = TABLES_BY_ID[table].cap;
+    const occ = new Set(Object.values(seating).filter(s => s.table === table).map(s => s.seat));
+    for (let i = 1; i <= cap; i++) if (!occ.has(i)) return i;
+    return null;
+  };
+
+  const seatGroupAt = (groupId, table, startSeat) => {
+    const g = GROUPS_BY_ID[groupId];
+    if (!g) return;
+    setState(prev => {
+      const seating = { ...prev.seating };
+      g.members.forEach(p => delete seating[p.id]);
+      const cap = TABLES_BY_ID[table].cap;
+      const occ = new Set(Object.values(seating).filter(s => s.table === table).map(s => s.seat));
+      const free = [];
+      let s = startSeat || 1;
+      for (let k = 0; k < cap && free.length < g.members.length; k++) {
+        const seat = ((s - 1 + k) % cap) + 1;
+        if (!occ.has(seat)) free.push(seat);
+      }
+      g.members.forEach((p, i) => { if (free[i] != null) seating[p.id] = { table, seat: free[i] }; });
+      return { ...prev, seating };
+    });
+  };
+
+  const seatPersonAt = (personId, table, seat) => {
+    setState(prev => {
+      const seating = { ...prev.seating };
+      const prevPos = seating[personId] ? { ...seating[personId] } : null;
+      let target = seat;
+      if (target == null) { delete seating[personId]; target = firstFree(seating, table); if (target == null) return prev; }
+      const occ = occupantAt(seating, table, target);
+      delete seating[personId];
+      if (occ && occ !== personId) {
+        if (prevPos && !(prevPos.table === table && prevPos.seat === target)) seating[occ] = prevPos;
+        else { const f = firstFree(seating, table); if (f != null) seating[occ] = { table, seat: f }; }
+      }
+      seating[personId] = { table, seat: target };
+      return { ...prev, seating };
+    });
+  };
+
+  const unseatGroup = (groupId) => {
+    const g = GROUPS_BY_ID[groupId]; if (!g) return;
+    setState(prev => { const seating = { ...prev.seating }; g.members.forEach(p => delete seating[p.id]); return { ...prev, seating }; });
+  };
+  const unseatPerson = (personId) => {
+    setState(prev => { const seating = { ...prev.seating }; delete seating[personId]; return { ...prev, seating }; });
+  };
+
+  const renamePerson = (personId, fullName) => {
+    setState(prev => {
+      const names = { ...prev.names };
+      const t = (fullName || '').trim();
+      if (t && t !== PEOPLE_BY_ID[personId].defaultName) names[personId] = t; else delete names[personId];
+      return { ...prev, names };
+    });
+  };
+
+  const resetToMigration = () => {
+    if (confirm('Re-import your original allocation from the previous version (overwrites current)?')) {
+      setState(migrateFromV2() || autoSeat());
+      showToast('Re-imported original allocation');
+    }
+  };
+  const clearAll = () => {
+    if (confirm('Clear ALL seating (empty every seat)?')) setState({ seating: {}, names: state.names });
+  };
+
+  const exportSite = () => {
+    const data = {
+      generated: new Date().toISOString(),
+      tables: TABLES.map(t => {
+        const o = state.offsets[t.id] || { dx: 0, dy: 0 };
+        return { id: t.id, num: tableNums[t.id], capacity: t.cap, cx: t.cx + (o.dx || 0), cy: t.cy + (o.dy || 0) };
+      }),
+      guests: PEOPLE.map(p => {
+        const s = state.seating[p.id];
+        const pos = s ? SEAT_POS[s.table][s.seat] : null;
+        const o = s ? (state.offsets[s.table] || { dx: 0, dy: 0 }) : { dx: 0, dy: 0 };
+        return {
+          id: p.id, name: displayName(state.names, p),
+          group: GROUPS_BY_ID[p.groupId].label, groupId: p.groupId,
+          category: GROUPS_BY_ID[p.groupId].category,
+          table: s ? s.table : null, seat: s ? s.seat : null,
+          x: pos ? pos.cx + (o.dx || 0) : null, y: pos ? pos.cy + (o.dy || 0) : null,
+        };
+      }),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'seating-data.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('seating-data.json downloaded');
+  };
+
+  const exportCSV = () => {
+    let csv = 'Table,Seat,Guest,Party,Category\n';
+    [...TABLES].sort((a, b) => tableNums[a.id] - tableNums[b.id]).forEach(t => {
+      const rows = PEOPLE.filter(p => state.seating[p.id] && state.seating[p.id].table === t.id)
+        .map(p => ({ p, seat: state.seating[p.id].seat })).sort((a, b) => a.seat - b.seat);
+      rows.forEach(({ p, seat }) => {
+        const g = GROUPS_BY_ID[p.groupId];
+        csv += `${tableNums[t.id]},${seat},"${displayName(state.names, p)}","${g.label}","${g.category}"\n`;
+      });
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'seating.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /* ---- turn-based sharing: save/load the whole plan as a file ---- */
+  const planFileRef = useRef(null);
+  const savePlan = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = url;
+    a.download = `wedding-plan-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Plan saved — send this file to whoever edits next');
+  };
+  const loadPlanFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const st = JSON.parse(reader.result);
+        if (!st || typeof st !== 'object' || !st.seating || !st.names) throw new Error('bad');
+        Object.keys(st.seating).forEach(pid => { if (!PEOPLE_BY_ID[pid]) delete st.seating[pid]; });
+        if (!st.offsets) st.offsets = {};
+        setState(st);
+        showToast('Plan loaded — this is now the live plan');
+      } catch {
+        alert("That file doesn't look like a wedding plan file (expected the JSON from 'Save plan').");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleUnitDrop = (payload, table, seat) => {
+    if (payload.type === 'group') seatGroupAt(payload.groupId, table, seat);
+    else if (payload.type === 'person') { seatPersonAt(payload.personId, table, seat); setSoloPid(null); }
+  };
+
+  const swapTables = (a, b) => {
+    if (!a || !b || a === b) return;
+    setState(prev => {
+      const off = { ...prev.offsets };
+      const cur = id => ({
+        x: TABLES_BY_ID[id].cx + ((off[id] && off[id].dx) || 0),
+        y: TABLES_BY_ID[id].cy + ((off[id] && off[id].dy) || 0),
+      });
+      const ca = cur(a), cb = cur(b);
+      off[a] = { dx: cb.x - TABLES_BY_ID[a].cx, dy: cb.y - TABLES_BY_ID[a].cy };
+      off[b] = { dx: ca.x - TABLES_BY_ID[b].cx, dy: ca.y - TABLES_BY_ID[b].cy };
+      return { ...prev, offsets: off };
+    });
+    showToast(`Swapped Table ${tableNums[a]} ⇄ Table ${tableNums[b]}`);
+  };
+
+  const moveTableTo = (tableId, wx, wy) => {
+    const t = TABLES_BY_ID[tableId];
+    if (!t) return;
+    setState(prev => ({
+      ...prev,
+      offsets: { ...prev.offsets, [tableId]: { dx: Math.round(wx - t.cx), dy: Math.round(wy - t.cy) } },
+    }));
+    showToast(`Moved Table ${tableNums[tableId]}`);
+  };
+
+  const primeSolo = (personId) => {
+    // double-click can leave a text selection which hijacks the next drag — clear it
+    try { const sel = window.getSelection(); if (sel) sel.removeAllRanges(); } catch {}
+    setSoloPid(prev => {
+      if (prev === personId) { showToast('Back to moving the whole party'); return null; }
+      showToast(`${displayName(state.names, PEOPLE_BY_ID[personId])} moves alone next drag (still linked to party)`);
+      return personId;
+    });
+  };
+
+  const focusPerson = (personId) => {
+    const s = state.seating[personId];
+    if (s) setFocusReq({ table: s.table, seat: s.seat, at: Date.now() });
+  };
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand"><h1>Dima &amp; Susie</h1><small>Seating Plan</small></div>
+        <div className="stats">
+          <span>Seated <b>{seatedCount}</b> / {TOTAL_GUESTS}</span>
+          <span>Capacity <b>{TOTAL_CAPACITY}</b></span>
+          <span>Tables <b>{TABLES.length}</b></span>
+        </div>
+        <div className="actions">
+          <button onClick={savePlan} title="Download the whole plan as a file — send it to whoever edits next">Save plan</button>
+          <button onClick={() => planFileRef.current && planFileRef.current.click()} title="Open a plan file someone sent you — replaces the current plan">Load plan</button>
+          <input
+            ref={planFileRef} type="file" accept=".json,application/json" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files && e.target.files[0]; if (f) loadPlanFile(f); e.target.value = ''; }}
+          />
+          <button onClick={exportSite}>Export for website</button>
+          <button onClick={exportCSV}>Export CSV</button>
+          <button onClick={resetToMigration}>Re-import</button>
+          <button onClick={clearAll}>Clear</button>
+        </div>
+      </header>
+
+      <Floor
+        state={state} soloPid={soloPid} focusReq={focusReq} drag={drag} tableNums={tableNums}
+        onUnitDrop={handleUnitDrop} onPrimeSolo={primeSolo} onUnseatPerson={unseatPerson}
+        onSwapTable={swapTables} onMoveTable={moveTableTo} startDrag={startDrag} floorApiRef={floorApiRef}
+      />
+
+      <Sidebar
+        state={state} filter={filter} setFilter={setFilter} tableNums={tableNums}
+        onUnseatGroup={unseatGroup} onUnseatPerson={unseatPerson}
+        editingPersonId={editingPersonId} setEditingPersonId={setEditingPersonId}
+        onRenamePerson={renamePerson} onFocusPerson={focusPerson} startDrag={startDrag}
+      />
+
+      {toast && <div className="toast">{toast}</div>}
+      {drag && drag.started && (
+        <div className="drag-ghost" style={{ left: drag.clientX + 14, top: drag.clientY + 6, borderColor: drag.color || 'var(--ink)' }}>
+          {drag.kind === 'table' ? '⇄ ' : ''}{drag.label}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- FLOOR ---------- */
+const FW = 1000, FH = 1600;
+function Floor({ state, soloPid, focusReq, drag, tableNums, onUnitDrop, onPrimeSolo, onUnseatPerson, onSwapTable, onMoveTable, startDrag, floorApiRef }) {
+  const wrapRef = useRef(null);
+  const [view, setView] = useState({ x: 0, y: 0, k: 0.5 });
+  const [panning, setPanning] = useState(false);
+  const [hover, setHover] = useState(null);   // hit-test result during a drag
+  const panRef = useRef(null);
+  const artRef = useRef(null);
+  const viewRef = useRef(view);
+  const offsets = state.offsets || {};
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+  useEffect(() => { if (artRef.current && !artRef.current.firstChild) artRef.current.innerHTML = FLOOR_SVG; }, []);
+
+  /* screen point -> floor (world) coordinates */
+  const toWorld = (clientX, clientY) => {
+    const el = wrapRef.current; if (!el) return null;
+    const r = el.getBoundingClientRect(); const v = viewRef.current;
+    return { wx: (clientX - r.left - v.x) / v.k, wy: (clientY - r.top - v.y) / v.k };
+  };
+
+  /* convert a screen point to the nearest seat / table on the floor */
+  const hitTest = (clientX, clientY) => {
+    const w = toWorld(clientX, clientY); if (!w) return null;
+    const { wx, wy } = w;
+    let best = null, bd = 18;
+    for (const s of SEATS) {
+      const o = offsets[s.table] || {};
+      const dx = (s.cx + (o.dx || 0)) - wx, dy = (s.cy + (o.dy || 0)) - wy;
+      const dd = Math.hypot(dx, dy);
+      if (dd < bd) { bd = dd; best = { type: 'seat', table: s.table, seat: s.num }; }
+    }
+    if (best) return best;
+    let bt = null, btd = 46;
+    for (const t of TABLES) {
+      const o = offsets[t.id] || {};
+      const dx = (t.cx + (o.dx || 0)) - wx, dy = (t.cy + (o.dy || 0)) - wy;
+      const dd = Math.hypot(dx, dy);
+      if (dd < btd) { btd = dd; bt = { type: 'table', tableId: t.id }; }
+    }
+    return bt;
+  };
+
+  /* expose hover/drop to App's global pointer listeners */
+  useEffect(() => {
+    floorApiRef.current = {
+      hover: (cx, cy) => setHover(cx == null ? null : hitTest(cx, cy)),
+      drop: (d, cx, cy) => {
+        const t = hitTest(cx, cy);
+        setHover(null);
+        if (d.kind === 'table') {
+          const target = t ? (t.type === 'table' ? t.tableId : t.table) : null;
+          if (target && target !== d.tableId) {
+            onSwapTable(d.tableId, target);
+          } else {
+            // dropped on empty floor: move the table there
+            const w = toWorld(cx, cy);
+            if (w && w.wx > 40 && w.wx < 960 && w.wy > 40 && w.wy < 1560) onMoveTable(d.tableId, w.wx, w.wy);
+          }
+          return;
+        }
+        if (!t) return;
+        const payload = d.kind === 'person' ? { type: 'person', personId: d.personId } : { type: 'group', groupId: d.groupId };
+        if (t.type === 'seat') onUnitDrop(payload, t.table, t.seat);
+        else onUnitDrop(payload, t.tableId, null);
+      },
+    };
+  });
+
+  /* move whole table groups in the background art to match offsets */
+  useEffect(() => {
+    if (!artRef.current) return;
+    TABLES.forEach(t => {
+      const g = artRef.current.querySelector('#' + t.id);
+      if (!g) return;
+      const o = offsets[t.id];
+      if (o && (o.dx || o.dy)) g.setAttribute('transform', `translate(${o.dx},${o.dy})`);
+      else g.removeAttribute('transform');
+    });
+  }, [offsets]);
+
+  /* keep artwork table numbers in sync with logical (position-based) numbering */
+  useEffect(() => {
+    if (!artRef.current) return;
+    TABLES.forEach(t => {
+      const el = artRef.current.querySelector('#' + t.id + '-label text');
+      if (el && tableNums[t.id] != null) el.textContent = tableNums[t.id];
+    });
+  }, [tableNums, offsets]);
+
+  const clampK = k => Math.min(6, Math.max(0.2, k));
+  const fit = useCallback(() => {
+    const el = wrapRef.current; if (!el) return;
+    const { width, height } = el.getBoundingClientRect();
+    if (width <= 0 || height <= 0) return;
+    const k = Math.min(width / (FW + 80), height / (FH + 80));
+    setView({ k, x: (width - FW * k) / 2, y: (height - FH * k) / 2 });
+  }, []);
+  const didFitRef = useRef(false);
+  useEffect(() => {
+    const el = wrapRef.current; if (!el) return;
+    const tryFit = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0 && !didFitRef.current) { fit(); didFitRef.current = true; }
+    };
+    tryFit();
+    const ro = new ResizeObserver(tryFit);
+    ro.observe(el);
+    const onResize = () => fit();
+    window.addEventListener('resize', onResize);
+    return () => { ro.disconnect(); window.removeEventListener('resize', onResize); };
+  }, [fit]);
+
+  const zoomAt = (cx, cy, factor) => {
+    const el = wrapRef.current; const r = el.getBoundingClientRect();
+    const mx = cx - r.left, my = cy - r.top;
+    setView(v => { const k2 = clampK(v.k * factor); const s = k2 / v.k;
+      return { k: k2, x: mx - (mx - v.x) * s, y: my - (my - v.y) * s }; });
+  };
+
+  useEffect(() => {
+    const el = wrapRef.current; if (!el) return;
+    const onWheel = (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 1/1.12); };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  /* animated focus/zoom to a seat */
+  useEffect(() => {
+    if (!focusReq) return;
+    const pos = SEAT_POS[focusReq.table] && SEAT_POS[focusReq.table][focusReq.seat];
+    if (!pos) return;
+    const o = offsets[focusReq.table] || { dx: 0, dy: 0 };
+    const px = pos.cx + (o.dx || 0), py = pos.cy + (o.dy || 0);
+    const el = wrapRef.current; const r = el.getBoundingClientRect();
+    const targetK = 2.6;
+    const tx = r.width / 2 - px * targetK;
+    const ty = r.height / 2 - py * targetK;
+    const start = { ...view }; const t0 = performance.now(); const dur = 900;
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    let raf;
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / dur); const e = ease(t);
+      setView({ k: start.k + (targetK - start.k) * e, x: start.x + (tx - start.x) * e, y: start.y + (ty - start.y) * e });
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [focusReq]);
+
+  const onMouseDown = (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.zoom-controls')) return;
+    panRef.current = { sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y };
+    setPanning(true);
+  };
+  useEffect(() => {
+    if (!panning) return;
+    const move = (e) => { const p = panRef.current; setView(v => ({ ...v, x: p.ox + (e.clientX - p.sx), y: p.oy + (e.clientY - p.sy) })); };
+    const up = () => setPanning(false);
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, [panning]);
+
+  const draggingUnit = drag && (drag.kind === 'person' || drag.kind === 'group');
+  const draggingTable = drag && drag.kind === 'table';
+  const hoverTableId = hover ? (hover.type === 'table' ? hover.tableId : hover.table) : null;
+
+  return (
+    <div ref={wrapRef} className={`floor-wrap ${panning ? 'panning' : ''} ${drag && drag.started ? 'dragging' : ''}`} onMouseDown={onMouseDown}>
+      <div className="world" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
+        <div className="floor-art" ref={artRef}></div>
+        <div className="hitlayer">
+          {SEATS.map(seat => {
+            const key = seat.table + '-' + seat.num;
+            const o = offsets[seat.table] || { dx: 0, dy: 0 };
+            const cx = seat.cx + (o.dx || 0), cy = seat.cy + (o.dy || 0);
+            const pid = Object.keys(state.seating).find(id => state.seating[id].table === seat.table && state.seating[id].seat === seat.num);
+            const p = pid ? PEOPLE_BY_ID[pid] : null;
+            const col = p ? groupColor(p.groupId) : null;
+            const isDrop = draggingUnit && hover && hover.type === 'seat' && hover.table === seat.table && hover.seat === seat.num;
+            return (
+              <div key={key}
+                 className={`seat-node ${p ? 'occupied' : ''} ${soloPid === pid ? 'solo' : ''} ${isDrop ? 'seat-drop' : ''}`}
+                 style={{ left: cx - 14, top: cy - 14, borderColor: p ? col : 'transparent' }}
+                 onMouseDown={p ? (e) => {
+                   if (e.button !== 0) return;
+                   e.stopPropagation();
+                   const soloThis = soloPid === pid || e.altKey || GROUPS_BY_ID[p.groupId].members.length === 1;
+                   const info = soloThis
+                     ? { kind: 'person', personId: pid, label: displayName(state.names, p), color: col }
+                     : { kind: 'group', groupId: p.groupId, label: GROUPS_BY_ID[p.groupId].members.map(m => firstNameOf(displayName(state.names, m))).join(', '), color: col };
+                   startDrag(info, e);
+                 } : undefined}
+                 onDoubleClick={p ? (e) => { e.stopPropagation(); onPrimeSolo(pid); } : undefined}
+                 title={p ? `${displayName(state.names, p)} — party: ${GROUPS_BY_ID[p.groupId].label}\nDrag = move whole party · Hold Alt (or double-click first) = move just this person · drop on an occupied chair to swap` : 'Empty seat'}
+              >
+                {p && <span className="seat-name">{firstNameOf(displayName(state.names, p))}</span>}
+              </div>
+            );
+          })}
+
+          {TABLES.map(t => {
+            const o = offsets[t.id] || { dx: 0, dy: 0 };
+            const cx = t.cx + (o.dx || 0), cy = t.cy + (o.dy || 0);
+            const isDrop = draggingTable && hoverTableId === t.id && drag.tableId !== t.id;
+            return (
+              <div key={t.id + '-handle'}
+                 className={`table-handle ${isDrop ? 'table-drop' : ''}`}
+                 style={{ left: cx - 27, top: cy - 27 }}
+                 onMouseDown={(e) => {
+                   if (e.button !== 0) return;
+                   e.stopPropagation();
+                   startDrag({ kind: 'table', tableId: t.id, label: 'Table ' + t.num }, e);
+                 }}
+                 title={`Table ${tableNums[t.id]} — drag onto another table to swap, or onto empty floor to move`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="zoom-level">{Math.round(view.k * 100)}%</div>
+      <div className="zoom-controls">
+        <button onClick={() => { const r = wrapRef.current.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 1.3); }}>+</button>
+        <button onClick={() => { const r = wrapRef.current.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.3); }}>−</button>
+        <button onClick={fit} style={{ fontSize: '12px' }}>⤢</button>
+      </div>
+      <div className="zoom-hint">Scroll to zoom · drag background to pan · seats sharpen at any zoom</div>
+    </div>
+  );
+}
+
+/* ---------- SIDEBAR ---------- */
+function Sidebar({ state, filter, setFilter, tableNums, onUnseatGroup, onUnseatPerson, editingPersonId, setEditingPersonId, onRenamePerson, onFocusPerson, startDrag }) {
+  const [expanded, setExpanded] = useState({});
+  const editRef = useRef(null);
+  useEffect(() => { if (editingPersonId && editRef.current) editRef.current.select(); }, [editingPersonId]);
+
+  const categories = useMemo(() => { const o = []; GROUPS.forEach(g => { if (!o.includes(g.category)) o.push(g.category); }); return o; }, []);
+  const tableNumById = tableNums;
+
+  const groupInfo = (g) => {
+    const tables = new Set(); let n = 0;
+    g.members.forEach(p => { const s = state.seating[p.id]; if (s) { n++; tables.add(s.table); } });
+    return { n, tables: [...tables] };
+  };
+
+  const visible = GROUPS.filter(g => {
+    if (filter === 'all') return true;
+    if (filter === 'unseated') return g.members.some(p => !state.seating[p.id]);
+    return g.category === filter;
+  });
+  const byCat = {}; visible.forEach(g => (byCat[g.category] = byCat[g.category] || []).push(g));
+  const totalUnseated = PEOPLE.filter(p => !state.seating[p.id]).length;
+
+  return (
+    <aside className="sidebar">
+      <div className="side-head"><h2>Guests</h2><div className="sub">{GROUPS.length} parties · {totalUnseated} unseated</div></div>
+      <div className="filter">
+        <button className={filter==='all'?'active':''} onClick={() => setFilter('all')}>All</button>
+        <button className={filter==='unseated'?'active':''} onClick={() => setFilter('unseated')}>Unseated</button>
+        {categories.map(c => <button key={c} className={filter===c?'active':''} onClick={() => setFilter(c)}>{c}</button>)}
+      </div>
+      <div className="groups">
+        {Object.entries(byCat).map(([cat, gs]) => {
+          const total = gs.reduce((s, g) => s + g.members.length, 0);
+          return (
+            <div key={cat} className="cat-section">
+              <div className="cat-title"><span>{cat}</span><span className="pill">{gs.length} parties · {total} ppl</span></div>
+              {gs.map(g => {
+                const { n, tables } = groupInfo(g);
+                const fully = n === g.members.length && n > 0;
+                const isOpen = !!expanded[g.id];
+                const where = n === 0 ? null : tables.length > 1
+                  ? `split: T${tables.map(t => tableNumById[t]).join(' + T')}`
+                  : `Table ${tableNumById[tables[0]]}${fully ? '' : ` (${n}/${g.members.length})`}`;
+                return (
+                  <div key={g.id} className={`group ${fully ? 'seated' : ''}`} style={{ '--gc': groupColor(g.id) }}>
+                    <div className="g-head"
+                      onMouseDown={e => { if (e.button !== 0 || e.target.closest('.g-expand')) return; startDrag({ kind: 'group', groupId: g.id, label: g.members.map(p => firstNameOf(displayName(state.names, p))).join(', '), color: groupColor(g.id) }, e); }}
+                      onDoubleClick={() => n > 0 && onUnseatGroup(g.id)}
+                      title={`${g.members.map(p => displayName(state.names, p)).join(', ')}\nDrag onto a chair to seat this party${n>0?' · Double-click to unseat':''}`}>
+                      <span className="g-dot" />
+                      <div className="g-label">
+                        {g.members.map(p => displayName(state.names, p)).join(', ')}
+                        {where && <div className={`g-where ${tables.length>1||!fully?'partial':''}`}>{where}</div>}
+                      </div>
+                      <span className="g-badge">{g.members.length}</span>
+                      <button className={`g-expand ${isOpen?'open':''}`} onClick={e => { e.stopPropagation(); setExpanded(x => ({ ...x, [g.id]: !x[g.id] })); }}>▸</button>
+                    </div>
+                    {isOpen && (
+                      <div className="g-members">
+                        {g.members.map(p => {
+                          const s = state.seating[p.id]; const isEd = editingPersonId === p.id;
+                          return (
+                            <div key={p.id} className="member"
+                              onMouseDown={e => { if (e.button !== 0 || isEd || e.target.closest('.m-edit')) return; startDrag({ kind: 'person', personId: p.id, label: displayName(state.names, p), color: groupColor(g.id) }, e); }}
+                              onDoubleClick={() => s && onFocusPerson(p.id)}
+                              title={s ? 'Drag to move just this person · Double-click to zoom to their seat' : 'Drag to seat just this person'}>
+                              <span className="g-dot" style={{ background: groupColor(g.id) }} />
+                              <span className="m-name">
+                                {isEd ? (
+                                  <input ref={editRef} defaultValue={displayName(state.names, p)}
+                                    onBlur={e => { onRenamePerson(p.id, e.target.value); setEditingPersonId(null); }}
+                                    onKeyDown={e => { if (e.key==='Enter') e.target.blur(); if (e.key==='Escape') setEditingPersonId(null); }} />
+                                ) : displayName(state.names, p)}
+                              </span>
+                              {s && !isEd && <span className="m-at">T{tableNumById[s.table]}·s{s.seat}</span>}
+                              {!isEd && <button className="m-edit" title="Edit full name" onClick={e => { e.stopPropagation(); setEditingPersonId(p.id); }}>✎</button>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div className="hint">
+        Names show inside each chair — <b>scroll to zoom right down to a seat</b>. Drag a chair = move the whole party · <b>hold Alt while dragging = move just that person</b> (or double-click the chair first) · drop onto an occupied chair to <b>swap</b> · drag a table's centre onto another table to swap, or onto <b>empty floor to move it there</b> · expand ▸ to edit <b>full names</b> or double-click a person to fly the camera to their seat.
+      </div>
+    </aside>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
