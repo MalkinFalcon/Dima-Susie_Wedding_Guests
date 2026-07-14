@@ -331,8 +331,8 @@
   },
   {
    "id": "g12-p0",
-   "name": "Aki",
-   "group": "Aki, Hayley",
+   "name": "Achillea",
+   "group": "Achillea, Hayley",
    "groupId": "g12",
    "category": "Friends",
    "table": "table-3",
@@ -343,7 +343,7 @@
   {
    "id": "g12-p1",
    "name": "Hayley",
-   "group": "Aki, Hayley",
+   "group": "Achillea, Hayley",
    "groupId": "g12",
    "category": "Friends",
    "table": "table-3",

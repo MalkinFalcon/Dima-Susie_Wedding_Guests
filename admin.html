@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>D&S — Admin: Messages &amp; Music</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --void:#170c1f; --plum:#241233; --gold:#c9a557; --goldb:#f2d692; --rose:#c98b87; --cream:#f6ecd4; --line:rgba(201,165,87,.3); }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;background:linear-gradient(180deg,var(--plum),var(--void) 60%);color:var(--cream);min-height:100vh;}
+  header{position:sticky;top:0;z-index:5;background:rgba(23,12,31,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:24px;margin:0;color:var(--goldb);}
+  .sub{font-size:12px;color:var(--rose);}
+  .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+  button{font:inherit;font-size:13px;font-weight:600;color:var(--goldb);background:rgba(201,165,87,.12);
+    border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer;}
+  button.primary{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
+  button:active{transform:scale(.96);}
+  main{max-width:980px;margin:0 auto;padding:18px 16px 80px;}
+  .note{font-size:13px;color:rgba(246,236,212,.75);line-height:1.55;background:rgba(201,165,87,.07);
+    border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;}
+  .note b{color:var(--goldb);}
+  input[type=search]{width:100%;font:inherit;font-size:15px;color:var(--cream);background:rgba(28,15,38,.75);
+    border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;outline:none;margin-bottom:14px;}
+  .party{background:rgba(36,18,51,.75);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+  .p-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:9px;}
+  .p-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--cream);}
+  .p-meta{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--rose);}
+  .p-set{margin-left:auto;font-size:11px;color:var(--goldb);}
+  .row{display:flex;gap:8px;align-items:center;margin-top:7px;flex-wrap:wrap;}
+  .row label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--rose);width:70px;flex-shrink:0;}
+  .row input[type=text], .row textarea{flex:1;min-width:200px;font:inherit;font-size:14px;color:var(--cream);
+    background:rgba(23,12,31,.7);border:1px solid var(--line);border-radius:9px;padding:8px 12px;outline:none;}
+  .row textarea{resize:vertical;min-height:38px;}
+  .row .play{padding:7px 12px;font-size:12px;}
+  .dirty{border-color:var(--goldb)!important;}
+  #status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1a10;color:var(--goldb);
+    padding:10px 20px;border-radius:999px;font-size:13px;border:1px solid var(--line);display:none;z-index:10;}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Messages &amp; Music</h1><div class="sub">Admin · maps saved to seating/messages.json + seating/music.json</div></div>
+  <div class="actions">
+    <button id="dl-msg" class="primary">⬇ Download messages.json</button>
+    <button id="dl-mus" class="primary">⬇ Download music.json</button>
+  </div>
+</header>
+<main>
+  <div class="note">
+    <b>How this works:</b> edit below, then download the two JSON files and drop them into the
+    <b>seating/</b> folder (replacing the old ones), commit &amp; push — or just hand them to Claude.
+    Music files: put .mp3s in <b>seating/music/</b> and type the exact filename here (e.g. <i>rasputin.mp3</i>).
+    Unmapped parties hear the built-in waltz. Every mp3 fades out ~10s in. ▶ tests the file through this page.
+  </div>
+  <input type="search" id="filter" placeholder="Filter parties…">
+  <div id="list">Loading parties…</div>
+</main>
+<div id="status"></div>
+<script>
+"use strict";
+let PARTIES=[], MSGS={}, MUSIC={};
+const $=s=>document.querySelector(s);
+function toast(t){ const s=$('#status'); s.textContent=t; s.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>s.style.display='none',2600); }
+
+async function boot(){
+  let data=null;
+  try{ const r=await fetch('seating/seating-data.json?_='+Date.now()); if(r.ok) data=await r.json(); }catch(e){}
+  if(!data){ $('#list').textContent='Could not load seating/seating-data.json — run this page from the site or a local server.'; return; }
+  try{ const r=await fetch('seating/messages.json?_='+Date.now()); if(r.ok) MSGS=await r.json()||{}; }catch(e){}
+  try{ const r=await fetch('seating/music.json?_='+Date.now()); if(r.ok) MUSIC=await r.json()||{}; }catch(e){}
+  const by={};
+  data.guests.forEach(g=>{ (by[g.groupId]=by[g.groupId]||{groupId:g.groupId,label:g.group,category:g.category,names:[],tables:new Set()}).names.push(g.name); if(g.table) by[g.groupId].tables.add(g.table); });
+  const tnum={}; data.tables.forEach(t=>tnum[t.id]=t.num);
+  PARTIES=Object.values(by).map(p=>({...p,tableNums:[...p.tables].map(t=>tnum[t]).sort((a,b)=>a-b)}));
+  PARTIES.sort((a,b)=>a.names[0].localeCompare(b.names[0]));
+  render();
+}
+function joinNames(a){ return a.length<2?a[0]:a.length===2?a[0]+' & '+a[1]:a.slice(0,-1).join(', ')+' & '+a[a.length-1]; }
+function render(){
+  const f=($('#filter').value||'').toLowerCase();
+  $('#list').innerHTML = PARTIES.filter(p=>!f||p.names.join(' ').toLowerCase().includes(f)).map(p=>{
+    const m=MSGS[p.groupId]||'', mu=MUSIC[p.groupId]||'';
+    const badge=(m||mu)?`<span class="p-set">${m?'✉':''}${mu?' ♫':''}</span>`:'';
+    return `<div class="party" data-g="${p.groupId}">
+      <div class="p-head"><span class="p-name">${joinNames(p.names)}</span>
+        <span class="p-meta">${p.category} · Table ${p.tableNums.join(' & ')||'—'}</span>${badge}</div>
+      <div class="row"><label>Message</label><textarea data-k="msg" placeholder="Shown in their banner (leave blank for none)">${m.replace(/</g,'&lt;')}</textarea></div>
+      <div class="row"><label>Music</label><input type="text" data-k="mus" placeholder="filename.mp3 (blank = built-in waltz)" value="${mu.replace(/"/g,'&quot;')}">
+        <button class="play" data-k="play">▶ test</button></div>
+    </div>`;
+  }).join('') || '<div class="note">No parties match.</div>';
+  $('#list').querySelectorAll('.party').forEach(el=>{
+    const g=el.dataset.g;
+    el.querySelector('[data-k=msg]').addEventListener('input',e=>{ const v=e.target.value.trim(); if(v) MSGS[g]=v; else delete MSGS[g]; e.target.classList.add('dirty'); });
+    el.querySelector('[data-k=mus]').addEventListener('input',e=>{ const v=e.target.value.trim(); if(v) MUSIC[g]=v; else delete MUSIC[g]; e.target.classList.add('dirty'); });
+    el.querySelector('[data-k=play]').addEventListener('click',()=>{
+      const v=el.querySelector('[data-k=mus]').value.trim(); if(!v){ toast('No filename entered'); return; }
+      if(window.__test){ window.__test.pause(); }
+      window.__test=new Audio('seating/music/'+encodeURIComponent(v));
+      window.__test.play().then(()=>toast('Playing '+v+' (10s)')).catch(()=>toast('Could not play — is '+v+' in seating/music/?'));
+      setTimeout(()=>{ if(window.__test){window.__test.pause();} },10000);
+    });
+  });
+}
+$('#filter').addEventListener('input',render);
+function dl(name,obj){ const b=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href);
+  toast(name+' downloaded — drop it into the seating/ folder'); }
+$('#dl-msg').addEventListener('click',()=>dl('messages.json',MSGS));
+$('#dl-mus').addEventListener('click',()=>dl('music.json',MUSIC));
+boot();
+</script>
+</body>
+</html>

@@ -651,8 +651,8 @@
   },
   {
    "id": "g12-p0",
-   "name": "Aki",
-   "group": "Aki, Hayley",
+   "name": "Achillea",
+   "group": "Achillea, Hayley",
    "groupId": "g12",
    "category": "Friends",
    "table": "table-3",
@@ -663,7 +663,7 @@
   {
    "id": "g12-p1",
    "name": "Hayley",
-   "group": "Aki, Hayley",
+   "group": "Achillea, Hayley",
    "groupId": "g12",
    "category": "Friends",
    "table": "table-3",
@@ -2544,6 +2544,48 @@ function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].
 addEventListener('resize',()=>{ if(!document.getElementById('search-screen').classList.contains('gone')) fitRoom(true); });
 
 boot();
+
+/* ============ per-party MUSIC + MESSAGES (config-driven, admin-managed) ============ */
+let MUSIC_MAP = {};
+(async function loadConfigs(){
+  try{ const r=await fetch('messages.json?_='+Date.now()); if(r.ok){ const j=await r.json(); if(j&&typeof j==='object') window.CUSTOM_MESSAGES=j; } }catch(e){}
+  try{ const r=await fetch('music.json?_='+Date.now()); if(r.ok){ const j=await r.json(); if(j&&typeof j==='object') MUSIC_MAP=j; } }catch(e){}
+})();
+const trackFor = p => (MUSIC_MAP && (MUSIC_MAP[p.groupId] || MUSIC_MAP[p.label])) || null;
+let trackEl=null, trackFadeTimer=null, trackFadeInt=null;
+function stopTrack(){
+  if(trackFadeTimer){clearTimeout(trackFadeTimer);trackFadeTimer=null;}
+  if(trackFadeInt){clearInterval(trackFadeInt);trackFadeInt=null;}
+  if(trackEl){ try{trackEl.pause();}catch(e){} trackEl=null; }
+}
+function playTrack(file){
+  stopTrack();
+  try{
+    const el=new Audio('music/'+encodeURIComponent(file));
+    trackEl=el;
+    el.volume = audio.isMuted()? 0 : 1;
+    el.play().catch(()=>{});
+    // fade out after 10s (~2s ramp), per couple's spec
+    trackFadeTimer=setTimeout(()=>{
+      trackFadeInt=setInterval(()=>{
+        if(trackEl!==el){ clearInterval(trackFadeInt); trackFadeInt=null; return; }
+        el.volume=Math.max(0, el.volume-0.08);
+        if(el.volume<=0.01){ clearInterval(trackFadeInt); trackFadeInt=null; try{el.pause();}catch(e){} if(trackEl===el) trackEl=null; }
+      },160);
+    },10000);
+  }catch(e){}
+}
+const __origReveal = reveal;
+reveal = function(party){
+  const f = trackFor(party);
+  if(f){
+    const s=audio.startWaltz; audio.startWaltz=function(){};
+    try{ __origReveal(party); } finally{ audio.startWaltz=s; }
+    playTrack(f);
+  } else { stopTrack(); __origReveal(party); }
+};
+document.getElementById('mute').addEventListener('click',()=>{ if(trackEl) trackEl.volume = audio.isMuted()?0:1; });
+document.getElementById('back').addEventListener('click', stopTrack);
 </script>
 </body>
 </html>
