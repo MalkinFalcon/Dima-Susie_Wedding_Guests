@@ -133,12 +133,14 @@
     display:none;align-items:center;justify-content:center;border:0;background:none;color:var(--rose);
     font-size:22px;font-family:'Cormorant Garamond',serif;cursor:pointer;}
   body.searching #clearq{display:flex;}
-  .search-hint{margin-top:12px;font-size:14px;color:rgba(236,217,180,.6);text-align:center;height:20px;flex-shrink:0;transition:color .3s;}
-  .search-hint.tap{color:var(--goldb);font-size:15px;font-weight:600;letter-spacing:.02em;text-shadow:0 0 14px rgba(242,214,146,.35);}
+  .search-hint{margin-top:10px;font-size:14px;color:rgba(236,217,180,.6);text-align:center;min-height:20px;flex-shrink:0;transition:color .3s;line-height:1.35;}
+  .search-hint.tap{color:var(--goldb);font-size:16px;font-weight:700;letter-spacing:.02em;text-shadow:0 0 14px rgba(242,214,146,.35);}
+  .search-hint.tap .ru{display:block;font-size:12px;font-weight:500;color:rgba(236,217,180,.65);margin-top:2px;}
 
   /* results dropdown */
   #results{width:100%;max-width:440px;margin-top:10px;display:flex;flex-direction:column;gap:9px;
-    overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding-bottom:16px;}
+    overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding-bottom:16px;
+    touch-action:pan-y;overscroll-behavior:contain;}
   .card{display:flex;align-items:center;gap:13px;padding:15px 16px;border-radius:15px;cursor:pointer;min-height:64px;
     background:linear-gradient(180deg,rgba(84,32,42,.92),rgba(44,14,20,.92));
     border:1px solid rgba(201,165,87,.3);
@@ -151,8 +153,13 @@
   .card .who .nm{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;line-height:1.12;color:var(--cream);}
   .card .who .nm mark{background:none;color:var(--goldb);font-weight:700;text-shadow:0 0 12px rgba(242,214,146,.5);}
   .card .who .cat{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--rose);margin-top:4px;opacity:.9;}
-  .card .go{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);white-space:nowrap;display:flex;align-items:center;gap:5px;}
-  .card .go svg{width:16px;height:16px;}
+  .card .go{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;
+    display:flex;align-items:center;gap:6px;color:#3a2410;
+    background:linear-gradient(180deg,var(--goldb),var(--gold));
+    border-radius:999px;padding:10px 14px;flex-shrink:0;
+    box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35);}
+  .card .go .tapico{font-size:17px;line-height:1;display:inline-block;animation:tapwiggle 1.6s ease-in-out infinite;}
+  @keyframes tapwiggle{0%,100%{transform:translateY(0) rotate(0);}20%{transform:translateY(3px) rotate(-12deg);}40%{transform:translateY(0) rotate(0);}}
   .noresult{text-align:center;color:rgba(236,217,180,.5);font-family:'Cormorant Garamond',serif;font-size:19px;padding:18px;}
 
   /* seat name floaters */
@@ -2388,7 +2395,7 @@ function wireSearch(){
     const raw=q.value, val=norm(raw);
     ghostTyped.textContent=''; ghostRest.textContent='';
     if(!val){ results.innerHTML=''; hint.classList.remove('tap'); hint.textContent='Try a first name — e.g. “Dima” or “Susie”'; sel=[]; return; }
-    hint.classList.add('tap'); hint.textContent='Tap your name below ↓ · Нажмите на своё имя';
+    hint.classList.add('tap'); hint.innerHTML='Tap your name below&nbsp;👇<span class="ru">Нажмите на своё имя ниже</span>';
     const seen=new Set(), starts=[], incl=[];
     NAME_INDEX.forEach(n=>{
       if(seen.has(n.party.groupId)) return;
@@ -2407,7 +2414,7 @@ function wireSearch(){
       return `<div class="card" data-i="${idx}" style="animation-delay:${idx*40}ms">
         <span class="pip" style="color:${color}"></span>
         <div class="who"><div class="nm">${nm}</div><div class="cat">${escapeHtml(p.category)}</div></div>
-        <div class="go">${tstr} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        <div class="go">${tstr}<span class="tapico">👆</span></div>
       </div>`;
     }).join('');
     [...results.querySelectorAll('.card')].forEach(el=>{
