@@ -2448,7 +2448,7 @@ function wireSearch(){
     });
   }
   q.addEventListener('input', render);
-  q.addEventListener('focus', ()=>document.body.classList.add('searching'));
+  q.addEventListener('focus', ()=>{ document.body.classList.add('searching'); vvKick(); });
   q.addEventListener('blur', ()=>{ if(!q.value) setTimeout(()=>{ if(document.activeElement!==q && !q.value) document.body.classList.remove('searching'); },200); });
   document.getElementById('clearq').addEventListener('click', ()=>{ q.value=''; render(); q.focus(); });
   q.addEventListener('keydown', e=>{
@@ -2464,12 +2464,19 @@ function highlight(text,val){
 function catColor(cat){ return {'Friends':'#d09a94','Family':'#9dbb9d','Cousins':'#c9a557','Family Friends':'#b39ecf','Bride & Groom':'#f2d692'}[cat]||'#c9a557'; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-/* keyboard-safe layout: keep search + results inside the visual viewport */
+/* keyboard-safe layout: keep search + results inside the visual viewport.
+   Some in-app browsers (Messenger/Instagram webviews) fire visualViewport events
+   unreliably, so we re-measure from several triggers + delayed ticks after focus. */
 function vvSize(){
-  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  document.getElementById('search-screen').style.height = h + 'px';
+  const vv = window.visualViewport;
+  // use whichever viewport actually shrank when the keyboard opened
+  const h = vv ? Math.min(vv.height, window.innerHeight) : window.innerHeight;
+  const ss = document.getElementById('search-screen');
+  if(ss){ ss.style.height = h + 'px'; ss.style.top = (vv ? vv.offsetTop : 0) + 'px'; }
 }
+function vvKick(){ vvSize(); [80,200,350,550,800].forEach(t=>setTimeout(vvSize,t)); }
 if(window.visualViewport){ visualViewport.addEventListener('resize', vvSize); visualViewport.addEventListener('scroll', vvSize); }
+window.addEventListener('resize', vvSize);
 vvSize();
 
 /* ============================================================= AUDIO ==== */
