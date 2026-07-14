@@ -3,3 +3,6 @@
 # OS junk
 Thumbs.db
 .DS_Store
+
+# large source render (optimized copy lives in seating/dance.webp)
+hf_*.gif
