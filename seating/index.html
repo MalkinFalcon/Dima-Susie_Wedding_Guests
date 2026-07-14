@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content" />
-<title>Dima &amp; Susie — Find Your Seat</title>
+<title>Susie &amp; Dima — Find Your Seat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -92,7 +92,7 @@
     animation:rise 1s .4s forwards, sheen 3.4s 1.6s ease-in-out 2;
     opacity:0;transform:translateY(14px);}
   @keyframes sheen{0%{background-position:120% 0;}100%{background-position:-40% 0;}}
-  .amp{display:block;font-size:.44em;font-weight:500;opacity:.85;margin:-.08em 0;font-style:italic;}
+  .amp{display:block;font-size:.44em;font-weight:500;opacity:.9;margin:.04em 0;font-style:italic;}
   .subtitle{margin-top:14px;font-family:'Cormorant Garamond',serif;font-size:22px;letter-spacing:.02em;font-style:italic;
     color:#ecd9b4;opacity:0;animation:rise 1s .7s forwards;text-align:center;}
   .subtitle small{display:block;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--rose);
@@ -285,15 +285,15 @@
       <svg class="monogram" viewBox="0 0 100 100" fill="none">
         <circle cx="50" cy="50" r="46" stroke="url(#mg)" stroke-width="1.5" opacity=".7"/>
         <circle cx="50" cy="50" r="41" stroke="url(#mg)" stroke-width=".8" opacity=".4"/>
-        <text x="50" y="60" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="38" fill="url(#mg)">D&amp;S</text>
+        <text x="50" y="60" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="38" fill="url(#mg)">S&amp;D</text>
         <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7bf"/><stop offset="1" stop-color="#a5813a"/></linearGradient></defs>
       </svg>
-      <div class="names">Dima<span class="amp">&amp;</span>Susie</div>
+      <div class="names">Susie<span class="amp">&amp;</span>Dima</div>
       <div class="subtitle">Seating Plan<small>Your seat awaits</small></div>
     </div>
 
     <div id="compact">
-      <span class="cm">D&amp;S</span>
+      <span class="cm">S&amp;D</span>
       <span class="ct">Find your seat<small>Найдите своё место</small></span>
     </div>
 
@@ -315,7 +315,7 @@
     <svg class="mono" viewBox="0 0 100 100" fill="none">
       <circle cx="50" cy="50" r="46" stroke="#f2d692" stroke-width="1.5" opacity=".75" stroke-dasharray="10 7"/>
       <circle cx="50" cy="50" r="38" stroke="#c9a557" stroke-width=".8" opacity=".5"/>
-      <text x="50" y="59" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="30" fill="#f2d692">D&amp;S</text>
+      <text x="50" y="59" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="30" fill="#f2d692">S&amp;D</text>
     </svg>
     <div class="fx">Finding your seat…</div>
     <div class="fxr">МИНУТОЧКУ</div>
@@ -2420,7 +2420,7 @@ function wireSearch(){
   function render(){
     const raw=q.value, val=norm(raw);
     ghostTyped.textContent=''; ghostRest.textContent='';
-    if(!val){ results.innerHTML=''; hint.classList.remove('tap'); hint.textContent='Try a first name — e.g. “Dima” or “Susie”'; sel=[]; return; }
+    if(!val){ results.innerHTML=''; hint.classList.remove('tap'); hint.textContent='Try a first name — e.g. “Susie” or “Dima”'; sel=[]; return; }
     hint.classList.add('tap'); hint.innerHTML='Tap your name below&nbsp;👇<span class="ru">Нажмите на своё имя ниже</span>';
     const seen=new Set(), starts=[], incl=[];
     NAME_INDEX.forEach(n=>{
