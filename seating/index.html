@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content" />
+<meta name="color-scheme" content="dark" />
 <title>Susie &amp; Dima — Find Your Seat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
+    color-scheme:dark;      /* stop in-app WebViews (camera/photos apps) re-tinting the palette */
     --void:#160709;         /* near-black maroon */
     --floor:#2e1016;
     --claret:#5c1a26;
@@ -31,7 +33,9 @@
   /* ---------- layers ---------- */
   #dust{position:fixed;inset:0;z-index:1;pointer-events:none;}
   #stage-wrap{position:fixed;inset:0;z-index:2;overflow:hidden;}
-  #world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;}
+  /* will-change is applied only DURING camera motion (see tween/pinch): a permanent hint makes
+     in-app WebViews cache one low-zoom texture and bitmap-stretch it => blurry tables/curtains */
+  #world{position:absolute;top:0;left:0;transform-origin:0 0;}
   #world svg{display:block;}
   #stage-wrap.shake{animation:shake .32s ease;}
   @keyframes shake{
@@ -269,7 +273,18 @@
   @keyframes pop{to{opacity:1;transform:scale(1) rotate(0);}}
   @keyframes cardpop{to{opacity:1;transform:scale(1);}}
   @keyframes floatin{to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
-  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.1ms!important;}}
+  /* NOTE: no prefers-reduced-motion kill-switch here. Android in-app WebViews (camera/photos
+     apps) often report reduce due to battery saver, which flattened the whole experience;
+     the entrance/glow animations ARE the product, so they stay on everywhere. */
+  /* in-app WebViews without backdrop-filter: solidify panels so they don't look washed out */
+  @supports not (backdrop-filter: blur(1px)){
+    .banner-inner{background:linear-gradient(180deg,rgba(74,26,36,.99),rgba(32,10,15,1));}
+    .floater .fn{background:rgba(22,7,11,.9);}
+    #zoomtoggle{background:rgba(23,7,9,.88);}
+    #mute{background:rgba(38,14,20,.9);}
+    #seeking{background:rgba(22,7,11,.95);}
+    #zoomhint{background:rgba(30,10,16,.94);}
+  }
 </style>
 </head>
 <body>
@@ -2252,12 +2267,15 @@ const easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const easeOutQuint=t=>1-Math.pow(1-t,5);
 function tween(from,to,dur,ease,onEnd,onStep){
   if(camAnim) cancelAnimationFrame(camAnim);
+  const world=document.getElementById('world');
+  world.style.willChange='transform';                 // promote to a layer only while moving
   const s={...from}, t0=performance.now();
   const step=now=>{
     let t=Math.min(1,(now-t0)/dur); const e=ease(t);
     cam.x=s.x+(to.x-s.x)*e; cam.y=s.y+(to.y-s.y)*e; cam.k=s.k+(to.k-s.k)*e;
     applyCam(); if(onStep) onStep(t);
-    if(t<1) camAnim=requestAnimationFrame(step); else { camAnim=null; if(onEnd) onEnd(); }
+    if(t<1) camAnim=requestAnimationFrame(step);
+    else { camAnim=null; world.style.willChange='auto'; /* re-rasterize crisp at final zoom */ if(onEnd) onEnd(); }
   };
   camAnim=requestAnimationFrame(step);
 }
@@ -2600,6 +2618,7 @@ document.getElementById('back').onclick=()=>{
 let pinch=null;
 const wrap=document.getElementById('stage-wrap');
 wrap.addEventListener('touchstart',e=>{ if(!document.getElementById('banner').classList.contains('up')) return;
+  document.getElementById('world').style.willChange='transform';
   if(e.touches.length===2){ pinch={d:dist(e.touches),k:cam.k,cx:(e.touches[0].clientX+e.touches[1].clientX)/2,cy:(e.touches[0].clientY+e.touches[1].clientY)/2,camx:cam.x,camy:cam.y}; }
   else if(e.touches.length===1){ pinch={pan:true,x:e.touches[0].clientX,y:e.touches[0].clientY,camx:cam.x,camy:cam.y}; }
 },{passive:true});
@@ -2609,7 +2628,7 @@ wrap.addEventListener('touchmove',e=>{ if(!pinch) return;
     cam.k=k; cam.x=pinch.cx-(pinch.cx-pinch.camx)*(k/pinch.k); cam.y=pinch.cy-(pinch.cy-pinch.camy)*(k/pinch.k); }
   applyCam(); repositionFloaters();
 },{passive:true});
-wrap.addEventListener('touchend',()=>{pinch=null;},{passive:true});
+wrap.addEventListener('touchend',e=>{ pinch=null; if(e.touches.length===0) document.getElementById('world').style.willChange='auto'; },{passive:true});
 function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY); }
 addEventListener('resize',()=>{ if(!document.getElementById('search-screen').classList.contains('gone')) fitRoom(true); });
 
