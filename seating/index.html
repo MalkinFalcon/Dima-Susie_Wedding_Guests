@@ -276,7 +276,7 @@
   </div>
 
   <div id="seeking"><span class="ring"></span> Finding your seat…</div>
-  <img id="dance" alt="" aria-hidden="true" src="dance.webp">
+  <img id="dance" alt="" aria-hidden="true" src="gifs/default.webp">
   <div id="dance-shade" aria-hidden="true"></div>
 
   <div id="search-screen">
@@ -2257,7 +2257,12 @@ function clearFloaters(){ floaters.forEach(f=>f.remove()); floaters=[]; document
 
 function startDance(){
   const d=document.getElementById('dance'), s=document.getElementById('dance-shade');
-  if(d){ d.src=''; d.src='dance.webp'; d.classList.add('on'); }  // restart from cache so the pair enters from the left each time
+  if(d){ // per-party dance clip (falls back to default); restart from cache so the pair enters from the left each time
+    const dm = (typeof DANCE_MAP!=='undefined') ? DANCE_MAP : {};
+    const file = (currentParty && (dm[currentParty.groupId] || dm[currentParty.label])) || 'default.webp';
+    const url = 'gifs/' + file;
+    d.src=''; d.src=url; d.classList.add('on');
+  }
   if(s) s.classList.add('on');
 }
 function stopDance(){
@@ -2585,11 +2590,12 @@ addEventListener('resize',()=>{ if(!document.getElementById('search-screen').cla
 
 boot();
 
-/* ============ per-party MUSIC + MESSAGES (config-driven, admin-managed) ============ */
-let MUSIC_MAP = {};
+/* ============ per-party MUSIC + MESSAGES + DANCE (config-driven, admin-managed) ============ */
+let MUSIC_MAP = {}, DANCE_MAP = {};
 (async function loadConfigs(){
   try{ const r=await fetch('messages.json?_='+Date.now()); if(r.ok){ const j=await r.json(); if(j&&typeof j==='object') window.CUSTOM_MESSAGES=j; } }catch(e){}
   try{ const r=await fetch('music.json?_='+Date.now()); if(r.ok){ const j=await r.json(); if(j&&typeof j==='object') MUSIC_MAP=j; } }catch(e){}
+  try{ const r=await fetch('dances.json?_='+Date.now()); if(r.ok){ const j=await r.json(); if(j&&typeof j==='object') DANCE_MAP=j; } }catch(e){}
 })();
 const trackFor = p => (MUSIC_MAP && (MUSIC_MAP[p.groupId] || MUSIC_MAP[p.label])) || null;
 let trackEl=null, trackFadeTimer=null, trackFadeInt=null;

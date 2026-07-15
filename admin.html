@@ -47,22 +47,28 @@
     <button id="copy-claude" class="primary">📋 Copy for Claude</button>
     <button id="dl-msg">⬇ messages.json</button>
     <button id="dl-mus">⬇ music.json</button>
+    <button id="dl-dance">⬇ dances.json</button>
   </div>
 </header>
 <main>
   <div class="note">
     <b>How this works:</b> edit below, then download the two JSON files and drop them into the
     <b>seating/</b> folder (replacing the old ones), commit &amp; push — or just hand them to Claude.
-    Music files: put .mp3s in <b>seating/music/</b> and type the exact filename here (e.g. <i>rasputin.mp3</i>).
-    Unmapped parties hear the built-in waltz. Every mp3 fades out ~10s in. ▶ tests the file through this page.
+    Music files: put .mp3s in <b>seating/music/</b>; dance clips (800×600 4:3 transparent .webp) in <b>seating/gifs/</b> —
+    type the exact filename in each field. Unmapped parties hear the built-in waltz and see <i>default.webp</i>.
+    Every mp3 fades out ~10s in. ▶ tests each file through this page.
   </div>
   <input type="search" id="filter" placeholder="Filter parties…">
   <div id="list">Loading parties…</div>
 </main>
 <div id="status"></div>
+<div id="gifpreview" style="display:none;position:fixed;inset:0;z-index:20;background:rgba(23,7,9,.85);align-items:center;justify-content:center;flex-direction:column;gap:14px;cursor:pointer" onclick="this.style.display='none'">
+  <img id="gifpreview-img" alt="" style="max-width:90vw;max-height:75vh;background:repeating-conic-gradient(#333 0 25%,#444 0 50%) 50%/24px 24px">
+  <div style="color:#f2d692;font-size:13px">tap anywhere to close</div>
+</div>
 <script>
 "use strict";
-let PARTIES=[], MSGS={}, MUSIC={};
+let PARTIES=[], MSGS={}, MUSIC={}, DANCES={};
 const $=s=>document.querySelector(s);
 function toast(t){ const s=$('#status'); s.textContent=t; s.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>s.style.display='none',2600); }
 
@@ -72,6 +78,7 @@ async function boot(){
   if(!data){ $('#list').textContent='Could not load seating/seating-data.json — run this page from the site or a local server.'; return; }
   try{ const r=await fetch('seating/messages.json?_='+Date.now()); if(r.ok) MSGS=await r.json()||{}; }catch(e){}
   try{ const r=await fetch('seating/music.json?_='+Date.now()); if(r.ok) MUSIC=await r.json()||{}; }catch(e){}
+  try{ const r=await fetch('seating/dances.json?_='+Date.now()); if(r.ok) DANCES=await r.json()||{}; }catch(e){}
   const by={};
   data.guests.forEach(g=>{ (by[g.groupId]=by[g.groupId]||{groupId:g.groupId,label:g.group,category:g.category,names:[],tables:new Set()}).names.push(g.name); if(g.table) by[g.groupId].tables.add(g.table); });
   const tnum={}; data.tables.forEach(t=>tnum[t.id]=t.num);
@@ -83,26 +90,35 @@ function joinNames(a){ return a.length<2?a[0]:a.length===2?a[0]+' & '+a[1]:a.sli
 function render(){
   const f=($('#filter').value||'').toLowerCase();
   $('#list').innerHTML = PARTIES.filter(p=>!f||p.names.join(' ').toLowerCase().includes(f)).map(p=>{
-    const m=MSGS[p.groupId]||'', mu=MUSIC[p.groupId]||'';
-    const badge=(m||mu)?`<span class="p-set">${m?'✉':''}${mu?' ♫':''}</span>`:'';
+    const m=MSGS[p.groupId]||'', mu=MUSIC[p.groupId]||'', dc=DANCES[p.groupId]||'';
+    const badge=(m||mu||dc)?`<span class="p-set">${m?'✉':''}${mu?' ♫':''}${dc?' 💃':''}</span>`:'';
     return `<div class="party" data-g="${p.groupId}">
       <div class="p-head"><span class="p-name">${joinNames(p.names)}</span>
         <span class="p-meta">${p.category} · Table ${p.tableNums.join(' & ')||'—'}</span>${badge}</div>
       <div class="row"><label>Message</label><textarea data-k="msg" placeholder="Shown in their banner (leave blank for none)">${m.replace(/</g,'&lt;')}</textarea></div>
       <div class="row"><label>Music</label><input type="text" data-k="mus" placeholder="filename.mp3 (blank = built-in waltz)" value="${mu.replace(/"/g,'&quot;')}">
         <button class="play" data-k="play">▶ test</button></div>
+      <div class="row"><label>Dance</label><input type="text" data-k="dance" placeholder="filename.webp in seating/gifs/ (blank = default.webp)" value="${dc.replace(/"/g,'&quot;')}">
+        <button class="play" data-k="dprev">▶ preview</button></div>
     </div>`;
   }).join('') || '<div class="note">No parties match.</div>';
   $('#list').querySelectorAll('.party').forEach(el=>{
     const g=el.dataset.g;
     el.querySelector('[data-k=msg]').addEventListener('input',e=>{ const v=e.target.value.trim(); if(v) MSGS[g]=v; else delete MSGS[g]; e.target.classList.add('dirty'); });
     el.querySelector('[data-k=mus]').addEventListener('input',e=>{ const v=e.target.value.trim(); if(v) MUSIC[g]=v; else delete MUSIC[g]; e.target.classList.add('dirty'); });
+    el.querySelector('[data-k=dance]').addEventListener('input',e=>{ const v=e.target.value.trim(); if(v) DANCES[g]=v; else delete DANCES[g]; e.target.classList.add('dirty'); });
     el.querySelector('[data-k=play]').addEventListener('click',()=>{
       const v=el.querySelector('[data-k=mus]').value.trim(); if(!v){ toast('No filename entered'); return; }
       if(window.__test){ window.__test.pause(); }
       window.__test=new Audio('seating/music/'+encodeURIComponent(v));
       window.__test.play().then(()=>toast('Playing '+v+' (10s)')).catch(()=>toast('Could not play — is '+v+' in seating/music/?'));
       setTimeout(()=>{ if(window.__test){window.__test.pause();} },10000);
+    });
+    el.querySelector('[data-k=dprev]').addEventListener('click',()=>{
+      const v=el.querySelector('[data-k=dance]').value.trim() || 'default.webp';
+      const ov=document.getElementById('gifpreview'); const im=document.getElementById('gifpreview-img');
+      im.onerror=()=>toast('Could not load — is '+v+' in seating/gifs/?');
+      im.src='seating/gifs/'+encodeURIComponent(v)+'?_='+Date.now(); ov.style.display='flex';
     });
   });
 }
@@ -112,10 +128,12 @@ function dl(name,obj){ const b=new Blob([JSON.stringify(obj,null,2)],{type:'appl
   toast(name+' downloaded — drop it into the seating/ folder'); }
 $('#dl-msg').addEventListener('click',()=>dl('messages.json',MSGS));
 $('#dl-mus').addEventListener('click',()=>dl('music.json',MUSIC));
+$('#dl-dance').addEventListener('click',()=>dl('dances.json',DANCES));
 $('#copy-claude').addEventListener('click',async ()=>{
   const blob = 'Please update the wedding configs and push:\n\n'
     + '=== seating/messages.json ===\n' + JSON.stringify(MSGS,null,2)
-    + '\n\n=== seating/music.json ===\n' + JSON.stringify(MUSIC,null,2);
+    + '\n\n=== seating/music.json ===\n' + JSON.stringify(MUSIC,null,2)
+    + '\n\n=== seating/dances.json ===\n' + JSON.stringify(DANCES,null,2);
   try{ await navigator.clipboard.writeText(blob); toast('Copied! Paste it to Claude and say “push this”'); }
   catch(e){
     const ta=document.createElement('textarea'); ta.value=blob; document.body.appendChild(ta);
