@@ -44,8 +44,9 @@
 <header>
   <div><h1>Messages &amp; Music</h1><div class="sub">Admin · maps saved to seating/messages.json + seating/music.json</div></div>
   <div class="actions">
-    <button id="dl-msg" class="primary">⬇ Download messages.json</button>
-    <button id="dl-mus" class="primary">⬇ Download music.json</button>
+    <button id="copy-claude" class="primary">📋 Copy for Claude</button>
+    <button id="dl-msg">⬇ messages.json</button>
+    <button id="dl-mus">⬇ music.json</button>
   </div>
 </header>
 <main>
@@ -111,6 +112,17 @@ function dl(name,obj){ const b=new Blob([JSON.stringify(obj,null,2)],{type:'appl
   toast(name+' downloaded — drop it into the seating/ folder'); }
 $('#dl-msg').addEventListener('click',()=>dl('messages.json',MSGS));
 $('#dl-mus').addEventListener('click',()=>dl('music.json',MUSIC));
+$('#copy-claude').addEventListener('click',async ()=>{
+  const blob = 'Please update the wedding configs and push:\n\n'
+    + '=== seating/messages.json ===\n' + JSON.stringify(MSGS,null,2)
+    + '\n\n=== seating/music.json ===\n' + JSON.stringify(MUSIC,null,2);
+  try{ await navigator.clipboard.writeText(blob); toast('Copied! Paste it to Claude and say “push this”'); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=blob; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('Copied! Paste it to Claude'); }catch(_){ toast('Copy failed — use the ⬇ download buttons'); }
+    ta.remove();
+  }
+});
 boot();
 </script>
 </body>
