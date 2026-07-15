@@ -207,13 +207,15 @@
   .b-where{font-family:'Cormorant Garamond',serif;font-size:clamp(12px,3.4vw,15.5px);font-weight:600;
     color:var(--rose);margin-top:3px;line-height:1.2;letter-spacing:.02em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  /* zoom-out toggle — faint, top-right */
-  .b-zoom{position:absolute;top:8px;right:9px;z-index:3;pointer-events:auto;
+  /* zoom-out toggle — faint, fixed at top-left of the screen, only while a seat is shown */
+  #zoomtoggle{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:12;
     font:inherit;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--goldb);background:rgba(23,7,9,.3);border:1px solid rgba(201,165,87,.45);
-    border-radius:999px;padding:6px 10px;min-height:30px;cursor:pointer;opacity:.7;
-    transition:opacity .2s, transform .1s;}
-  .b-zoom:hover{opacity:.95;} .b-zoom:active{transform:scale(.93);}
+    color:var(--goldb);background:rgba(23,7,9,.5);border:1px solid rgba(201,165,87,.5);
+    border-radius:999px;padding:8px 13px;min-height:34px;cursor:pointer;
+    opacity:0;transform:translateY(-8px);pointer-events:none;
+    backdrop-filter:blur(4px);transition:opacity .3s, transform .3s;}
+  #zoomtoggle.show{opacity:.82;transform:translateY(0);pointer-events:auto;}
+  #zoomtoggle:hover{opacity:1;} #zoomtoggle:active{transform:scale(.93);}
   .b-actions{display:flex;gap:10px;justify-content:center;margin-top:13px;pointer-events:auto;}
   .b-actions button{font:inherit;font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--goldb);
     background:rgba(201,165,87,.12);border:1px solid rgba(201,165,87,.4);border-radius:999px;padding:11px 18px;cursor:pointer;
@@ -283,6 +285,8 @@
     </svg>
   </div>
 
+  <button id="zoomtoggle" type="button">⤢ Zoom&nbsp;out</button>
+
   <div id="zoomhint">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/></svg>
     Pinch to zoom &nbsp;·&nbsp; drag to explore
@@ -335,7 +339,6 @@
   </div>
 
   <div id="banner"><div class="banner-inner">
-    <button id="zoomtoggle" class="b-zoom" type="button">⤢ Zoom&nbsp;out</button>
     <div class="b-honour" id="b-honour">✦ &nbsp;Guests of Honour&nbsp; ✦</div>
     <div class="b-party" id="b-party"></div>
     <div class="b-table" id="b-table"></div>
@@ -2287,6 +2290,7 @@ function stopDance(){
 function reveal(party){
   currentParty=party;
   clearFloaters();
+  document.getElementById('zoomtoggle').classList.remove('show');
   document.getElementById('banner').classList.remove('up');
   audio.startWaltz();
   // 1. curtains sweep closed over the search screen
@@ -2399,6 +2403,7 @@ function showBanner(party){
   const bm=document.getElementById('b-msg'); bm.textContent=msg; bm.classList.toggle('show',!!msg);
   document.querySelector('.banner-inner').classList.toggle('has-msg', !!msg);
   zoomedOut=false; updateZoomBtn();
+  document.getElementById('zoomtoggle').classList.add('show');
   document.getElementById('banner').classList.add('up');
 }
 
@@ -2460,11 +2465,10 @@ function wireSearch(){
       const p=n.party;
       const nm = highlight(joinNames(p.names), val);
       const color = catColor(p.category);
-      const tstr = p.tableNums.length>1? 'Tables '+p.tableNums.join(' & ') : 'Table '+p.tableNums[0];
       return `<div class="card" data-i="${idx}" style="animation-delay:${idx*40}ms">
         <span class="pip" style="color:${color}"></span>
         <div class="who"><div class="nm">${nm}</div><div class="cat">${escapeHtml(p.category)}</div></div>
-        <div class="go">${tstr}<span class="tapico">👆</span></div>
+        <div class="go">View<span class="tapico">👆</span></div>
       </div>`;
     }).join('');
     [...results.querySelectorAll('.card')].forEach(el=>{
@@ -2505,7 +2509,7 @@ vvSize();
 
 /* ============================================================= AUDIO ==== */
 const audio = (function(){
-  let ctx=null, muted=localStorage.getItem('ds-mute')==='1', waltzTimer=null, master=null, ok=true;
+  let ctx=null, muted=localStorage.getItem('ds-mute')==='1', waltzTimer=null, master=null, ok=true, waltzUsed=false, waltzBus=null;
   function ensure(){ if(!ok) return false;
     try{
       if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ok=false;return false;}
@@ -2515,12 +2519,12 @@ const audio = (function(){
     }catch(e){ ok=false; return false; }
   }
   const guard=fn=>function(){ try{ if(!ensure()) return; return fn.apply(null,arguments);}catch(e){} };
-  function note(freq,t,dur,type,vol,decay){
+  function note(freq,t,dur,type,vol,decay,dest){
     const o=ctx.createOscillator(), g=ctx.createGain();
     o.type=type||'triangle'; o.frequency.value=freq;
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||.18,t+0.008);
     g.gain.exponentialRampToValueAtTime(0.0001,t+(decay||dur));
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+    o.connect(g); g.connect(dest||master); o.start(t); o.stop(t+dur+0.05);
   }
   // original minor-key music-box waltz motif
   const A=220, mel=[
@@ -2528,23 +2532,26 @@ const audio = (function(){
     [14,1],[12,.5],[9,.5],[7,1.5],[9,.5],[12,1],[16,2]
   ];
   const st=n=>A*Math.pow(2,n/12);
-  function startWaltz(){ if(waltzTimer) return;
+  function startWaltz(){ if(waltzUsed || waltzTimer) return; waltzUsed=true;
+    waltzBus=ctx.createGain(); waltzBus.gain.value=1; waltzBus.connect(master);
     const beat=0.36;
     function schedule(){
       const base=ctx.currentTime+0.05; let t=base;
-      mel.forEach(([n,b])=>{ note(st(n),t,b*beat*.9,'triangle',.16,b*beat*.9); t+=b*beat; });
+      mel.forEach(([n,b])=>{ note(st(n),t,b*beat*.9,'triangle',.16,b*beat*.9,waltzBus); t+=b*beat; });
       let tb=base; const bl=[[-12],[0],[3]];
-      for(let i=0;i<12;i++){ const [n]=bl[i%3]; note(st(n)/2,tb,beat*.5,'sine',i%3?.06:.11,beat*.5); tb+=beat; }
+      for(let i=0;i<12;i++){ const [n]=bl[i%3]; note(st(n)/2,tb,beat*.5,'sine',i%3?.06:.11,beat*.5,waltzBus); tb+=beat; }
     }
     schedule();
     waltzTimer=setInterval(schedule, mel.reduce((s,m)=>s+m[1],0)*0.36*1000);
+    // load-screen tune plays once per session: hold ~10s, then fade out (never auto-replays without a page refresh)
+    setTimeout(()=>{ if(ctx && waltzBus){ const now=ctx.currentTime; waltzBus.gain.cancelScheduledValues(now); waltzBus.gain.setValueAtTime(waltzBus.gain.value||1, now); waltzBus.gain.linearRampToValueAtTime(0.0001, now+1.8); } }, 10000);
+    setTimeout(stopWaltz, 12000);
   }
   function stopWaltz(){ if(waltzTimer){ clearInterval(waltzTimer); waltzTimer=null; } }
   function arrival(){ const t=ctx.currentTime+0.02;
     const scale=[0,2,4,5,7,9,11,12,14,16,19,24];
     scale.forEach((n,i)=>note(st(n+7),t+i*0.045,.5,'triangle',.12,.5));
     [12,16,19,24].forEach((n,i)=>note(st(n+7),t+0.55,1.4,'sine',.1,1.4));
-    setTimeout(stopWaltz, 400);
   }
   function chime(i){ if(!ctx) return; const t=ctx.currentTime+0.01; note(st(24+[0,4,7,12,4][i%5]),t,.4,'sine',.14,.4); }
   function toggle(){ muted=!muted; localStorage.setItem('ds-mute',muted?'1':'0'); if(master) master.gain.value=muted?0:0.9; return muted; }
@@ -2584,6 +2591,7 @@ document.getElementById('mute').onclick=()=>{ const m=audio.toggle(); document.g
 document.getElementById('replay').onclick=()=>{ if(currentParty){ document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on'); clearFloaters(); reveal(currentParty);} };
 document.getElementById('zoomtoggle').onclick=toggleZoom;
 document.getElementById('back').onclick=()=>{
+  document.getElementById('zoomtoggle').classList.remove('show');
   document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on');
   clearFloaters(); audio.stopWaltz(); document.getElementById('vig').classList.remove('on');
   document.body.classList.remove('searching','curtains','curtains-open');
