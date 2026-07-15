@@ -195,6 +195,7 @@
     -webkit-background-clip:text;background-clip:text;color:transparent;
     display:inline-flex;animation:sheen 2.6s .8s ease-in-out 2;}
   .b-tablewrap{font-size:clamp(48px,15vw,74px);margin-top:2px;}
+  .b-tword{font-size:.4em;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-right:.24em;}
   .b-roll{display:inline-block;}
   .b-where{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,6vw,27px);font-weight:600;color:var(--goldb);margin-top:10px;
     line-height:1.15;text-shadow:0 0 16px rgba(242,214,146,.3);}
@@ -325,7 +326,7 @@
     <div class="b-honour" id="b-honour">✦ &nbsp;Guests of Honour&nbsp; ✦</div>
     <div class="b-party" id="b-party"></div>
     <div class="b-sub" id="b-sub">You are seated at · Ваш стол</div>
-    <div class="b-tablewrap"><span class="b-table"><span class="b-roll" id="b-roll"></span></span></div>
+    <div class="b-tablewrap"><span class="b-table"><span class="b-tword" id="b-tword">Table</span><span class="b-roll" id="b-roll"></span></span></div>
     <div class="b-where" id="b-where"></div>
     <div class="b-msg" id="b-msg"></div>
     <div class="b-actions">
@@ -2383,6 +2384,7 @@ function showBanner(party){
   // custom per-party message hook: set window.CUSTOM_MESSAGES = { groupId or label : "message" }
   const msg=(window.CUSTOM_MESSAGES&&(window.CUSTOM_MESSAGES[party.groupId]||window.CUSTOM_MESSAGES[party.label]))||party.message||'';
   const bm=document.getElementById('b-msg'); bm.textContent=msg; bm.classList.toggle('show',!!msg);
+  document.getElementById('b-tword').textContent = party.tableNums.length>1 ? 'Tables' : 'Table';
   rollNumber(party.tableNums.join(' & '));
   document.getElementById('banner').classList.add('up');
 }
@@ -2398,7 +2400,7 @@ function rollNumber(str){
   });
   // fallback: never leave the number invisible
   setTimeout(()=>spans.forEach(s=>{s.style.transform='translateY(0)';s.style.opacity='1';}), 1400);
-  document.querySelector('.b-tablewrap').style.setProperty('font-size', str.length>2? 'clamp(30px,10vw,52px)':'clamp(48px,15vw,74px)');
+  document.querySelector('.b-tablewrap').style.setProperty('font-size', str.length>2? 'clamp(28px,8.5vw,46px)':'clamp(42px,12.5vw,64px)');
 }
 
 /* gold ember burst */
