@@ -148,11 +148,10 @@
     transform:scale(.86);opacity:0;animation:cardpop .4s cubic-bezier(.2,1.5,.4,1) forwards;
     transition:transform .12s ease, border-color .2s;}
   .card:active{transform:scale(.97)!important;border-color:var(--goldb);}
-  .card .pip{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;background:currentColor;}
+  .card .pip{width:11px;height:11px;border-radius:50%;flex-shrink:0;color:var(--gold);box-shadow:0 0 8px currentColor;background:currentColor;}
   .card .who{flex:1;min-width:0;}
   .card .who .nm{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;line-height:1.12;color:var(--cream);}
   .card .who .nm mark{background:none;color:var(--goldb);font-weight:700;text-shadow:0 0 12px rgba(242,214,146,.5);}
-  .card .who .cat{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--rose);margin-top:4px;opacity:.9;}
   .card .go{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;
     display:flex;align-items:center;gap:6px;color:#3a2410;
     background:linear-gradient(180deg,var(--goldb),var(--gold));
@@ -2464,10 +2463,9 @@ function wireSearch(){
     results.innerHTML = sel.map(({n},idx)=>{
       const p=n.party;
       const nm = highlight(joinNames(p.names), val);
-      const color = catColor(p.category);
       return `<div class="card" data-i="${idx}" style="animation-delay:${idx*40}ms">
-        <span class="pip" style="color:${color}"></span>
-        <div class="who"><div class="nm">${nm}</div><div class="cat">${escapeHtml(p.category)}</div></div>
+        <span class="pip"></span>
+        <div class="who"><div class="nm">${nm}</div></div>
         <div class="go">View<span class="tapico">👆</span></div>
       </div>`;
     }).join('');
@@ -2489,7 +2487,6 @@ function highlight(text,val){
   const idx=norm(text).indexOf(val); if(idx<0||!val) return escapeHtml(text);
   return escapeHtml(text.slice(0,idx))+'<mark>'+escapeHtml(text.slice(idx,idx+val.length))+'</mark>'+escapeHtml(text.slice(idx+val.length));
 }
-function catColor(cat){ return {'Friends':'#d09a94','Family':'#9dbb9d','Cousins':'#c9a557','Family Friends':'#b39ecf','Bride & Groom':'#f2d692'}[cat]||'#c9a557'; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 /* keyboard-safe layout: keep search + results inside the visual viewport.
