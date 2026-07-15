@@ -186,22 +186,34 @@
   .banner-inner::before{left:9px;} .banner-inner::after{right:9px;}
   .b-honour{display:none;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--goldb);margin-bottom:6px;}
   .b-honour.show{display:block;}
-  .b-party{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,7.5vw,34px);font-weight:700;line-height:1.08;
+  .b-party{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,6.2vw,29px);font-weight:700;line-height:1.05;
     color:var(--cream);text-shadow:0 0 20px rgba(242,214,146,.25);}
-  .b-sub{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--rose);margin:10px 0 2px;}
-  .b-table{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:.95;
-    background:linear-gradient(105deg,#fbe7bf 30%,var(--gold) 48%,#fff3d0 52%,var(--gold) 56%,#9d7a34 85%);
-    background-size:220% 100%;
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    display:inline-flex;animation:sheen 2.6s .8s ease-in-out 2;}
-  .b-tablewrap{font-size:clamp(48px,15vw,74px);margin-top:2px;}
-  .b-tword{font-size:.4em;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-right:.24em;}
-  .b-roll{display:inline-block;}
-  .b-where{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,6vw,27px);font-weight:600;color:var(--goldb);margin-top:10px;
-    line-height:1.15;text-shadow:0 0 16px rgba(242,214,146,.3);}
-  .b-msg{display:none;margin-top:12px;padding-top:11px;border-top:1px solid rgba(201,165,87,.3);
-    font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;line-height:1.35;color:#ecd9b4;}
+  /* table line — secondary, always one line */
+  .b-table{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--goldb);
+    font-size:clamp(19px,5vw,25px);letter-spacing:.05em;margin:5px 0 2px;line-height:1;white-space:nowrap;
+    text-shadow:0 0 14px rgba(242,214,146,.4);}
+  /* no custom message → the table number becomes the focal point */
+  .banner-inner:not(.has-msg) .b-table{font-size:clamp(30px,8vw,44px);letter-spacing:.03em;margin:8px 0 4px;
+    text-shadow:0 0 22px rgba(242,214,146,.55);}
+  /* HERO message — big, bold, centre, glowing */
+  .b-msg{display:none;font-family:'Cormorant Garamond',serif;font-weight:700;
+    font-size:clamp(27px,8.4vw,39px);line-height:1.14;margin:11px 0 7px;color:#fff5db;
+    text-shadow:0 0 22px rgba(242,214,146,.65),0 0 44px rgba(201,120,90,.4);
+    animation:msgGlow 2.8s ease-in-out infinite alternate;}
   .b-msg.show{display:block;}
+  @keyframes msgGlow{from{text-shadow:0 0 16px rgba(242,214,146,.45),0 0 32px rgba(201,120,90,.28);}
+    to{text-shadow:0 0 32px rgba(242,214,146,.9),0 0 58px rgba(201,120,90,.6);}}
+  /* location — small, one liner, never wraps */
+  .b-where{font-family:'Cormorant Garamond',serif;font-size:clamp(12px,3.4vw,15.5px);font-weight:600;
+    color:var(--rose);margin-top:3px;line-height:1.2;letter-spacing:.02em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* zoom-out toggle — faint, top-right */
+  .b-zoom{position:absolute;top:8px;right:9px;z-index:3;pointer-events:auto;
+    font:inherit;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--goldb);background:rgba(23,7,9,.3);border:1px solid rgba(201,165,87,.45);
+    border-radius:999px;padding:6px 10px;min-height:30px;cursor:pointer;opacity:.7;
+    transition:opacity .2s, transform .1s;}
+  .b-zoom:hover{opacity:.95;} .b-zoom:active{transform:scale(.93);}
   .b-actions{display:flex;gap:10px;justify-content:center;margin-top:13px;pointer-events:auto;}
   .b-actions button{font:inherit;font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--goldb);
     background:rgba(201,165,87,.12);border:1px solid rgba(201,165,87,.4);border-radius:999px;padding:11px 18px;cursor:pointer;
@@ -323,12 +335,12 @@
   </div>
 
   <div id="banner"><div class="banner-inner">
+    <button id="zoomtoggle" class="b-zoom" type="button">⤢ Zoom&nbsp;out</button>
     <div class="b-honour" id="b-honour">✦ &nbsp;Guests of Honour&nbsp; ✦</div>
     <div class="b-party" id="b-party"></div>
-    <div class="b-sub" id="b-sub">You are seated at · Ваш стол</div>
-    <div class="b-tablewrap"><span class="b-table"><span class="b-tword" id="b-tword">Table</span><span class="b-roll" id="b-roll"></span></span></div>
-    <div class="b-where" id="b-where"></div>
+    <div class="b-table" id="b-table"></div>
     <div class="b-msg" id="b-msg"></div>
+    <div class="b-where" id="b-where"></div>
     <div class="b-actions">
       <button id="replay">↻ Watch again</button>
       <button id="back" class="primary">Find another</button>
@@ -2378,29 +2390,34 @@ function joinNames(arr){
 function showBanner(party){
   document.getElementById('b-party').textContent = joinNames(party.names);
   document.getElementById('b-honour').classList.toggle('show', /bride|groom/i.test(party.category||''));
-  const b=document.getElementById('b-sub');
-  b.textContent = party.tableNums.length>1 ? 'You are seated across · Ваши столы' : 'You are seated at · Ваш стол';
+  const nums = party.tableNums || [];
+  const tstr = nums.length>1 ? 'Tables '+nums.join(' & ') : (nums.length ? 'Table '+nums[0] : 'Your table');
+  document.getElementById('b-table').textContent = tstr;
   document.getElementById('b-where').textContent = whereText(party);
   // custom per-party message hook: set window.CUSTOM_MESSAGES = { groupId or label : "message" }
   const msg=(window.CUSTOM_MESSAGES&&(window.CUSTOM_MESSAGES[party.groupId]||window.CUSTOM_MESSAGES[party.label]))||party.message||'';
   const bm=document.getElementById('b-msg'); bm.textContent=msg; bm.classList.toggle('show',!!msg);
-  document.getElementById('b-tword').textContent = party.tableNums.length>1 ? 'Tables' : 'Table';
-  rollNumber(party.tableNums.join(' & '));
+  document.querySelector('.banner-inner').classList.toggle('has-msg', !!msg);
+  zoomedOut=false; updateZoomBtn();
   document.getElementById('banner').classList.add('up');
 }
-function rollNumber(str){
-  const roll=document.getElementById('b-roll'); roll.textContent='';
-  const spans=[];
-  [...String(str)].forEach((ch,idx)=>{
-    const span=document.createElement('span'); span.className='b-roll'; span.style.display='inline-block';
-    span.textContent=ch; span.style.transform='translateY(1em)'; span.style.opacity='0';
-    span.style.transition=`transform .5s cubic-bezier(.2,1.5,.4,1) ${idx*80+120}ms, opacity .4s ${idx*80+120}ms`;
-    roll.appendChild(span); spans.push(span);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{span.style.transform='translateY(0)';span.style.opacity='1';}));
-  });
-  // fallback: never leave the number invisible
-  setTimeout(()=>spans.forEach(s=>{s.style.transform='translateY(0)';s.style.opacity='1';}), 1400);
-  document.querySelector('.b-tablewrap').style.setProperty('font-size', str.length>2? 'clamp(28px,8.5vw,46px)':'clamp(42px,12.5vw,64px)');
+
+/* zoom-out toggle: pull back to the whole floor while keeping the party lit */
+let zoomedOut=false;
+function updateZoomBtn(){ const b=document.getElementById('zoomtoggle'); if(b) b.innerHTML = zoomedOut ? '⤢ Zoom&nbsp;in' : '⤢ Zoom&nbsp;out'; }
+function toggleZoom(){
+  const p=currentParty; if(!p) return;
+  if(zoomedOut){
+    const targetK=Math.min(3.4, Math.max(2.0, 520/Math.max(120, spread(p))));
+    tween(cam, camFor(p.cx, p.cy - 40/targetK, targetK), 850, easeInOut, repositionFloaters, repositionFloaters);
+    zoomedOut=false;
+  } else {
+    const v=viewport();
+    const wideK=Math.min(v.w/(DECOR_W+40), v.h/(DECOR_H+40))*0.98;
+    tween(cam, camFor(DECOR_W/2, DECOR_H/2, wideK), 850, easeInOut, repositionFloaters, repositionFloaters);
+    zoomedOut=true;
+  }
+  updateZoomBtn();
 }
 
 /* gold ember burst */
@@ -2565,6 +2582,7 @@ document.getElementById('mute').onclick=()=>{ const m=audio.toggle(); document.g
   ? '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>'
   : '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/>'; };
 document.getElementById('replay').onclick=()=>{ if(currentParty){ document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on'); clearFloaters(); reveal(currentParty);} };
+document.getElementById('zoomtoggle').onclick=toggleZoom;
 document.getElementById('back').onclick=()=>{
   document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on');
   clearFloaters(); audio.stopWaltz(); document.getElementById('vig').classList.remove('on');
