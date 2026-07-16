@@ -38,6 +38,40 @@
   .dirty{border-color:var(--goldb)!important;}
   #status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1a10;color:var(--goldb);
     padding:10px 20px;border-radius:999px;font-size:13px;border:1px solid var(--line);display:none;z-index:10;}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tabs button{flex:1;padding:11px 10px;}
+  .tabs button.on{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
+  .view{display:none;} .view.on{display:block;}
+
+  /* ---------- seating plan editor ---------- */
+  #plan-vp{position:relative;width:100%;height:60vh;min-height:320px;overflow:hidden;
+    border:1px solid var(--line);border-radius:14px;touch-action:none;cursor:grab;
+    background:radial-gradient(ellipse 70% 50% at 50% 35%, #33131c, #160709 75%);}
+  #plan-vp:active{cursor:grabbing;}
+  #plan-world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;}
+  .plan-bar{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap;}
+  .plan-bar button{padding:9px 13px;}
+  .zbtn{min-width:44px;font-size:17px;line-height:1;}
+  .sel-info{font-size:12.5px;color:var(--rose);flex:1;min-width:150px;}
+  .sel-info b{color:var(--goldb);}
+  .tshape{fill:#5c1a26;stroke:rgba(201,165,87,.75);stroke-width:1.5;}
+  .tnum{fill:#f2d692;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:30px;text-anchor:middle;opacity:.5;}
+  .seatg{cursor:pointer;}
+  .seatg .sdot{fill:#e8c877;stroke:#6b4d16;stroke-width:1;}
+  .seatg .sname{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;fill:#fff6e0;text-anchor:middle;pointer-events:none;}
+  .seatg.sel .sdot{fill:#fff;stroke:#fff;r:13;}
+  .seatg.sel .sname{fill:#fff;font-weight:800;}
+  .seatg.moved .sdot{fill:#7ee081;stroke:#2c6b30;}
+  .seatg.moved .sname{fill:#bdf3bf;}
+  #changes{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    background:rgba(36,18,51,.6);font-size:13px;max-height:210px;overflow:auto;}
+  #changes .chg{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(201,165,87,.12);}
+  #changes .chg:last-child{border-bottom:none;}
+  #changes .chg .who{color:var(--cream);font-weight:600;}
+  #changes .chg .to{color:var(--goldb);margin-left:auto;font-size:12px;}
+  .empty{color:rgba(246,236,212,.5);font-style:italic;}
 </style>
 </head>
 <body>
@@ -51,15 +85,48 @@
   </div>
 </header>
 <main>
-  <div class="note">
-    <b>How this works:</b> edit below, then download the two JSON files and drop them into the
-    <b>seating/</b> folder (replacing the old ones), commit &amp; push — or just hand them to Claude.
-    Music files: put .mp3s in <b>seating/music/</b>; dance clips (800×600 4:3 transparent .webp) in <b>seating/gifs/</b> —
-    type the exact filename in each field. Unmapped parties hear the built-in waltz and see <i>default.webp</i>.
-    Every mp3 fades out ~10s in. ▶ tests each file through this page.
+  <div class="tabs">
+    <button id="tab-parties" class="on">✉ Messages &amp; Music</button>
+    <button id="tab-plan">🪑 Seating plan</button>
   </div>
-  <input type="search" id="filter" placeholder="Filter parties…">
-  <div id="list">Loading parties…</div>
+
+  <!-- ===================== MESSAGES & MUSIC ===================== -->
+  <div id="view-parties" class="view on">
+    <div class="note">
+      <b>How this works:</b> edit below, then download the two JSON files and drop them into the
+      <b>seating/</b> folder (replacing the old ones), commit &amp; push — or just hand them to Claude.
+      Music files: put .mp3s in <b>seating/music/</b>; dance clips (800×600 4:3 transparent .webp) in <b>seating/gifs/</b> —
+      type the exact filename in each field. Unmapped parties hear the built-in waltz and see <i>default.webp</i>.
+      Every mp3 fades out ~10s in. ▶ tests each file through this page.
+    </div>
+    <input type="search" id="filter" placeholder="Filter parties…">
+    <div id="list">Loading parties…</div>
+  </div>
+
+  <!-- ===================== SEATING PLAN ===================== -->
+  <div id="view-plan" class="view">
+    <div class="note">
+      <b>Move people:</b> tap a name to pick them up, then tap whoever they should swap with — the two
+      trade seats. <b>Pinch</b> or use −/+ to zoom, <b>drag</b> to pan. Swapped people turn
+      <span style="color:#7ee081">green</span>. Nothing is live until you tap
+      <b>📋 Copy seat changes</b> and send them to Claude to push. Your edits are saved on this phone
+      if you close the page.
+    </div>
+    <div id="plan-vp"><div id="plan-world"></div></div>
+    <div class="plan-bar">
+      <button class="zbtn" id="z-out">−</button>
+      <button class="zbtn" id="z-in">+</button>
+      <button id="z-fit">Fit</button>
+      <div class="sel-info" id="sel-info">Tap a name to select…</div>
+    </div>
+    <div class="plan-bar">
+      <button id="commit-plan" class="primary">📋 Copy seat changes</button>
+      <button id="undo-plan">↶ Undo</button>
+      <button id="reset-plan">↺ Reset all</button>
+      <button id="dl-plan">⬇ seating-data.json</button>
+    </div>
+    <div id="changes"><span class="empty">No changes yet.</span></div>
+  </div>
 </main>
 <div id="status"></div>
 <div id="gifpreview" style="display:none;position:fixed;inset:0;z-index:20;background:rgba(23,7,9,.85);align-items:center;justify-content:center;flex-direction:column;gap:14px;cursor:pointer" onclick="this.style.display='none'">
@@ -68,7 +135,7 @@
 </div>
 <script>
 "use strict";
-let PARTIES=[], MSGS={}, MUSIC={}, DANCES={};
+let PARTIES=[], MSGS={}, MUSIC={}, DANCES={}, DATA=null;
 const $=s=>document.querySelector(s);
 function toast(t){ const s=$('#status'); s.textContent=t; s.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>s.style.display='none',2600); }
 
@@ -76,6 +143,7 @@ async function boot(){
   let data=null;
   try{ const r=await fetch('seating/seating-data.json?_='+Date.now()); if(r.ok) data=await r.json(); }catch(e){}
   if(!data){ $('#list').textContent='Could not load seating/seating-data.json — run this page from the site or a local server.'; return; }
+  DATA=data; planInit(data);
   try{ const r=await fetch('seating/messages.json?_='+Date.now()); if(r.ok) MSGS=await r.json()||{}; }catch(e){}
   try{ const r=await fetch('seating/music.json?_='+Date.now()); if(r.ok) MUSIC=await r.json()||{}; }catch(e){}
   try{ const r=await fetch('seating/dances.json?_='+Date.now()); if(r.ok) DANCES=await r.json()||{}; }catch(e){}
@@ -141,6 +209,216 @@ $('#copy-claude').addEventListener('click',async ()=>{
     ta.remove();
   }
 });
+/* =========================================================================
+   SEATING PLAN EDITOR
+   Seat POSITIONS are fixed geometry; only people move between them. Every table
+   is full, so every move is a swap. We track guestId -> {table,seat} and diff
+   against the original to produce a change list for Claude to apply + push.
+   ========================================================================= */
+const LSKEY='sd-seat-assign-v1';
+let ORIG={}, ASSIGN={}, COORD={}, GUEST={}, TNUM={}, selKey=null, undoStack=[];
+let pcam={x:0,y:0,k:1};
+
+function keyOf(p){ return p.table+'#'+p.seat; }
+
+function planInit(data){
+  data.tables.forEach(t=>TNUM[t.id]=t.num);
+  data.guests.forEach(g=>{
+    if(g.table==null||g.x==null) return;
+    GUEST[g.id]=g;
+    ORIG[g.id]={table:g.table, seat:g.seat};
+    COORD[g.table+'#'+g.seat]={x:g.x, y:g.y};
+  });
+  // restore any in-progress edits from this phone (discard if the roster changed under us)
+  ASSIGN=JSON.parse(JSON.stringify(ORIG));
+  try{
+    const saved=JSON.parse(localStorage.getItem(LSKEY)||'null');
+    if(saved && saved.n===Object.keys(ORIG).length && Object.keys(saved.a).every(id=>ORIG[id]))
+      ASSIGN=saved.a;
+  }catch(e){}
+  planRender(); planFit(); renderChanges();
+}
+function planSave(){ try{ localStorage.setItem(LSKEY, JSON.stringify({n:Object.keys(ORIG).length, a:ASSIGN})); }catch(e){} }
+
+function occupants(){ const o={}; for(const id in ASSIGN) o[keyOf(ASSIGN[id])]=id; return o; }
+
+function planRender(){
+  const occ=occupants();
+  // group fixed seats by table to draw the table shapes
+  const byT={};
+  for(const k in COORD){ const t=k.split('#')[0]; (byT[t]=byT[t]||[]).push({k, ...COORD[k]}); }
+  let svg='';
+  for(const tid in byT){
+    const seats=byT[tid];
+    const xs=seats.map(s=>s.x), ys=seats.map(s=>s.y);
+    const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+    const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+    const rx=Math.max(26,(maxx-minx)/2-16), ry=Math.max(26,(maxy-miny)/2-16);
+    const isPill=(ry/rx)>1.7||(rx/ry)>1.7;
+    svg += isPill
+      ? `<rect x="${(cx-rx).toFixed(1)}" y="${(cy-ry).toFixed(1)}" width="${(rx*2).toFixed(1)}" height="${(ry*2).toFixed(1)}" rx="${Math.min(rx,ry).toFixed(1)}" class="tshape"/>`
+      : `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" class="tshape"/>`;
+    svg += `<text x="${cx.toFixed(1)}" y="${(cy+10).toFixed(1)}" class="tnum">${TNUM[tid]}</text>`;
+    seats.forEach(s=>{
+      const gid=occ[s.k], g=gid?GUEST[gid]:null;
+      const moved = gid && (ORIG[gid].table!==ASSIGN[gid].table || ORIG[gid].seat!==ASSIGN[gid].seat);
+      const cls='seatg'+(selKey===s.k?' sel':'')+(moved?' moved':'');
+      svg += `<g class="${cls}" data-k="${s.k}">`+
+             `<circle class="sdot" cx="${s.x}" cy="${s.y}" r="11"/>`+
+             `<text class="sname" x="${s.x}" y="${(s.y-16).toFixed(1)}">${g?esc(g.name):''}</text>`+
+             `</g>`;
+    });
+  }
+  $('#plan-world').innerHTML =
+    `<svg width="1000" height="1600" viewBox="0 0 1000 1600" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  $('#plan-world').querySelectorAll('.seatg').forEach(el=>{
+    el.addEventListener('click', ()=>{ if(!dragged) seatTap(el.dataset.k); });
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function seatTap(k){
+  const occ=occupants();
+  if(selKey===null){ selKey=k; }
+  else if(selKey===k){ selKey=null; }
+  else {
+    const a=occ[selKey], b=occ[k];
+    if(a||b){
+      undoStack.push(JSON.parse(JSON.stringify(ASSIGN)));
+      const posA=a?{...ASSIGN[a]}:null, posB=b?{...ASSIGN[b]}:null;
+      if(a&&posB) ASSIGN[a]=posB;
+      if(b&&posA) ASSIGN[b]=posA;
+      planSave();
+      const an=a?GUEST[a].name:'(empty)', bn=b?GUEST[b].name:'(empty)';
+      toast('Swapped '+an+' ↔ '+bn);
+    }
+    selKey=null;
+  }
+  planRender(); renderChanges(); updateSel();
+}
+function updateSel(){
+  const occ=occupants(); const info=$('#sel-info');
+  if(!selKey){ info.textContent='Tap a name to select…'; return; }
+  const g=GUEST[occ[selKey]];
+  info.innerHTML = g ? ('Selected <b>'+esc(g.name)+'</b> — now tap who they swap with')
+                     : 'Selected an empty seat — tap someone to move them here';
+}
+
+function changedList(){
+  const out=[];
+  for(const id in ASSIGN){
+    if(ORIG[id].table!==ASSIGN[id].table || ORIG[id].seat!==ASSIGN[id].seat)
+      out.push({id, name:GUEST[id].name, from:ORIG[id], to:ASSIGN[id]});
+  }
+  return out.sort((a,b)=>TNUM[a.to.table]-TNUM[b.to.table] || a.to.seat-b.to.seat);
+}
+function renderChanges(){
+  const ch=changedList(), box=$('#changes');
+  if(!ch.length){ box.innerHTML='<span class="empty">No changes yet.</span>'; return; }
+  box.innerHTML = `<div style="color:var(--goldb);font-weight:700;margin-bottom:6px">${ch.length} ${ch.length===1?'person':'people'} moved</div>`+
+    ch.map(c=>`<div class="chg"><span class="who">${esc(c.name)}</span>
+      <span class="to">Table ${TNUM[c.from.table]} seat ${c.from.seat} → <b>Table ${TNUM[c.to.table]} seat ${c.to.seat}</b></span></div>`).join('');
+}
+
+/* ---------- zoom / pan ---------- */
+function applyPcam(){ $('#plan-world').style.transform=`translate(${pcam.x}px,${pcam.y}px) scale(${pcam.k})`; }
+function planFit(){
+  const vp=$('#plan-vp'), w=vp.clientWidth, h=vp.clientHeight;
+  if(!w||!h) return;                      // view is hidden (0x0) — the tab handler refits on open
+  pcam.k=Math.min(w/1000, h/1600)*0.95;
+  pcam.x=(w-1000*pcam.k)/2; pcam.y=(h-1600*pcam.k)/2; applyPcam();
+}
+function zoomAt(f, cx, cy){
+  const vp=$('#plan-vp').getBoundingClientRect();
+  const px=(cx===undefined? vp.width/2 : cx-vp.left), py=(cy===undefined? vp.height/2 : cy-vp.top);
+  const k2=Math.max(0.15, Math.min(6, pcam.k*f));
+  pcam.x = px-(px-pcam.x)*(k2/pcam.k); pcam.y = py-(py-pcam.y)*(k2/pcam.k); pcam.k=k2; applyPcam();
+}
+let dragged=false, ptr=null;
+(function wirePlanGestures(){
+  const vp=$('#plan-vp');
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  const mid=t=>({x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2});
+  vp.addEventListener('touchstart',e=>{
+    dragged=false;
+    if(e.touches.length===2){ const m=mid(e.touches); ptr={pinch:true,d:dist(e.touches),k:pcam.k,mx:m.x,my:m.y,camx:pcam.x,camy:pcam.y}; }
+    else if(e.touches.length===1){ ptr={x:e.touches[0].clientX,y:e.touches[0].clientY,camx:pcam.x,camy:pcam.y}; }
+  },{passive:true});
+  vp.addEventListener('touchmove',e=>{
+    if(!ptr) return;
+    if(ptr.pinch && e.touches.length===2){
+      const nd=dist(e.touches), k2=Math.max(0.15,Math.min(6, ptr.k*nd/ptr.d));
+      const r=vp.getBoundingClientRect(), px=ptr.mx-r.left, py=ptr.my-r.top;
+      pcam.x = px-(px-ptr.camx)*(k2/ptr.k); pcam.y = py-(py-ptr.camy)*(k2/ptr.k); pcam.k=k2; applyPcam(); dragged=true;
+    } else if(!ptr.pinch && e.touches.length===1){
+      const dx=e.touches[0].clientX-ptr.x, dy=e.touches[0].clientY-ptr.y;
+      if(Math.hypot(dx,dy)>6) dragged=true;
+      pcam.x=ptr.camx+dx; pcam.y=ptr.camy+dy; applyPcam();
+    }
+    e.preventDefault();
+  },{passive:false});
+  vp.addEventListener('touchend',()=>{ ptr=null; setTimeout(()=>dragged=false,60); },{passive:true});
+  // mouse (desktop)
+  vp.addEventListener('mousedown',e=>{ dragged=false; ptr={x:e.clientX,y:e.clientY,camx:pcam.x,camy:pcam.y,mouse:true}; });
+  addEventListener('mousemove',e=>{ if(!ptr||!ptr.mouse) return;
+    const dx=e.clientX-ptr.x, dy=e.clientY-ptr.y; if(Math.hypot(dx,dy)>5) dragged=true;
+    pcam.x=ptr.camx+dx; pcam.y=ptr.camy+dy; applyPcam(); });
+  addEventListener('mouseup',()=>{ if(ptr&&ptr.mouse){ ptr=null; setTimeout(()=>dragged=false,60);} });
+  vp.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.deltaY<0?1.12:1/1.12, e.clientX, e.clientY); },{passive:false});
+})();
+
+/* ---------- plan buttons ---------- */
+$('#z-in').onclick=()=>zoomAt(1.35);
+$('#z-out').onclick=()=>zoomAt(1/1.35);
+$('#z-fit').onclick=planFit;
+$('#undo-plan').onclick=()=>{
+  if(!undoStack.length){ toast('Nothing to undo'); return; }
+  ASSIGN=undoStack.pop(); selKey=null; planSave(); planRender(); renderChanges(); updateSel(); toast('Undone');
+};
+$('#reset-plan').onclick=()=>{
+  if(!changedList().length){ toast('Already at the original plan'); return; }
+  if(!confirm('Discard all seat changes and go back to the original plan?')) return;
+  undoStack.push(JSON.parse(JSON.stringify(ASSIGN)));
+  ASSIGN=JSON.parse(JSON.stringify(ORIG)); selKey=null; planSave(); planRender(); renderChanges(); updateSel(); toast('Reset to original');
+};
+$('#commit-plan').onclick=async ()=>{
+  const ch=changedList();
+  if(!ch.length){ toast('No seat changes to copy'); return; }
+  const blob='Please apply these seat changes to seating-data.json and push:\n\n'+
+    '=== SEAT CHANGES ('+ch.length+') ===\n'+
+    '# guestId | name | tableId | seat\n'+
+    ch.map(c=>`${c.id} | ${c.name} | ${c.to.table} | ${c.to.seat}`).join('\n')+
+    '\n\n# (x/y should be taken from that table+seat position)\n';
+  try{ await navigator.clipboard.writeText(blob); toast('Copied '+ch.length+' change(s) — paste to Claude'); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=blob; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('Copied — paste to Claude'); }catch(_){ toast('Copy failed — use ⬇ seating-data.json'); }
+    ta.remove();
+  }
+};
+$('#dl-plan').onclick=()=>{
+  const out=JSON.parse(JSON.stringify(DATA));
+  out.guests.forEach(g=>{
+    const a=ASSIGN[g.id]; if(!a) return;
+    const c=COORD[a.table+'#'+a.seat];
+    g.table=a.table; g.seat=a.seat; if(c){ g.x=c.x; g.y=c.y; }
+  });
+  const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='seating-data.json'; a.click(); URL.revokeObjectURL(a.href);
+  toast('seating-data.json downloaded — drop it into seating/');
+};
+
+/* ---------- tabs ---------- */
+$('#tab-parties').onclick=()=>{
+  $('#tab-parties').classList.add('on'); $('#tab-plan').classList.remove('on');
+  $('#view-parties').classList.add('on'); $('#view-plan').classList.remove('on');
+};
+$('#tab-plan').onclick=()=>{
+  $('#tab-plan').classList.add('on'); $('#tab-parties').classList.remove('on');
+  $('#view-plan').classList.add('on'); $('#view-parties').classList.remove('on');
+  planFit();
+};
+
 boot();
 </script>
 </body>
