@@ -2571,40 +2571,66 @@ function startDust(){
   addEventListener('resize',size);
 }
 
-/* landing-page sparkles: super-slow, faint, glowing motes drifting behind the title */
+/* landing-page starfield: slow-drifting glowing stars + soft motes behind the title */
 function startSparkles(){
   const cv=document.getElementById('sparkles'), ss=document.getElementById('search-screen');
   if(!cv||!ss) return;
   const c=cv.getContext('2d'); let W,H,parts=[];
   const d=Math.min(2, window.devicePixelRatio||1);   // cap DPR so big phones don't over-draw
-  function sprite(rgb){
+  // soft round mote
+  function halo(rgb){
     const s=document.createElement('canvas'); s.width=s.height=48;
     const x=s.getContext('2d'), g=x.createRadialGradient(24,24,0,24,24,24);
     g.addColorStop(0,'rgba('+rgb+',1)'); g.addColorStop(.3,'rgba('+rgb+',.5)'); g.addColorStop(1,'rgba('+rgb+',0)');
     x.fillStyle=g; x.fillRect(0,0,48,48); return s;
   }
-  const gold=sprite('242,214,146'), cream=sprite('255,241,214');
+  // 4-point twinkling star with its own glow
+  function star(rgb){
+    const s=document.createElement('canvas'); s.width=s.height=64;
+    const x=s.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0,'rgba('+rgb+',.85)'); g.addColorStop(.22,'rgba('+rgb+',.3)'); g.addColorStop(1,'rgba('+rgb+',0)');
+    x.fillStyle=g; x.fillRect(0,0,64,64);
+    x.fillStyle='rgba('+rgb+',1)'; x.beginPath();
+    for(let i=0;i<8;i++){                      // alternate long spike / short waist
+      const a=(Math.PI/4)*i-Math.PI/2, rad=(i%2===0)?29:3.4;
+      const px=32+Math.cos(a)*rad, py=32+Math.sin(a)*rad;
+      i?x.lineTo(px,py):x.moveTo(px,py);
+    }
+    x.closePath(); x.fill(); return s;
+  }
+  const gHalo=halo('242,214,146'), cHalo=halo('255,241,214');
+  const gStar=star('242,214,146'), cStar=star('255,246,224');
   function size(){ W=cv.width=innerWidth*d; H=cv.height=innerHeight*d; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
   size();
-  const N=Math.min(24, Math.max(12, Math.floor(innerWidth/30)));   // sparse
-  for(let i=0;i<N;i++) parts.push({
-    x:Math.random()*W, y:Math.random()*H,
-    r:(Math.random()*15+7)*d,                 // soft, largish haloes
-    s:(Math.random()*0.05+0.012)*d,           // super-slow float
-    a:Math.random()*0.11+0.05,                // faint (peak ~0.16)
-    ph:Math.random()*6.283, tw:Math.random()*0.5+0.5,
-    spr:Math.random()<0.72?gold:cream
-  });
+  const N=Math.min(72, Math.max(36, Math.floor(innerWidth/11)));   // plenty of activity
+  for(let i=0;i<N;i++){
+    const isStar=Math.random()<0.45;
+    parts.push({
+      x:Math.random()*W, y:Math.random()*H,
+      r:(isStar? Math.random()*13+7 : Math.random()*17+8)*d,
+      s:(Math.random()*0.07+0.015)*d,          // still a slow, calm drift
+      a:(isStar? Math.random()*0.24+0.16 : Math.random()*0.18+0.10),  // brighter, more present
+      ph:Math.random()*6.283, tw:Math.random()*0.6+0.5,
+      rot:Math.random()*6.283, rs:(Math.random()-0.5)*0.0006,         // stars turn very slowly
+      isStar, spr:isStar ? (Math.random()<0.7?gStar:cStar) : (Math.random()<0.7?gHalo:cHalo)
+    });
+  }
   function frame(t){
     requestAnimationFrame(frame);
     if(ss.classList.contains('gone')) return;          // skip work while the menu is hidden
     c.clearRect(0,0,W,H);
-    c.globalCompositeOperation='lighter';              // additive → gentle glow, never darkens
+    c.globalCompositeOperation='lighter';              // additive → glow, never darkens
     for(const p of parts){
       p.y-=p.s; p.x+=Math.sin(t/4600+p.ph)*0.09*d;     // slow upward drift + faint sway
       if(p.y<-p.r){ p.y=H+p.r; p.x=Math.random()*W; }
-      c.globalAlpha=p.a*(0.55+0.45*Math.sin(t/1600*p.tw+p.ph));  // slow twinkle
-      c.drawImage(p.spr, p.x-p.r/2, p.y-p.r/2, p.r, p.r);
+      c.globalAlpha=p.a*(0.45+0.55*Math.sin(t/1600*p.tw+p.ph));  // slow twinkle
+      if(p.isStar){
+        p.rot+=p.rs*16;
+        c.save(); c.translate(p.x,p.y); c.rotate(p.rot);
+        c.drawImage(p.spr, -p.r/2, -p.r/2, p.r, p.r); c.restore();
+      } else {
+        c.drawImage(p.spr, p.x-p.r/2, p.y-p.r/2, p.r, p.r);
+      }
     }
     c.globalAlpha=1; c.globalCompositeOperation='source-over';
   }
