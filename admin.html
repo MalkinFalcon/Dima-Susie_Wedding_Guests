@@ -72,6 +72,9 @@
   #changes .chg .who{color:var(--cream);font-weight:600;}
   #changes .chg .to{color:var(--goldb);margin-left:auto;font-size:12px;}
   .empty{color:rgba(246,236,212,.5);font-style:italic;}
+  #commit-out{width:100%;font:inherit;font-size:12px;line-height:1.5;color:var(--cream);
+    background:rgba(23,12,31,.85);border:1.5px solid var(--goldb);border-radius:10px;padding:10px 12px;
+    outline:none;resize:vertical;-webkit-user-select:text;user-select:text;white-space:pre;}
 </style>
 </head>
 <body>
@@ -126,6 +129,13 @@
       <button id="dl-plan">⬇ seating-data.json</button>
     </div>
     <div id="changes"><span class="empty">No changes yet.</span></div>
+    <div id="commit-box" style="display:none">
+      <div class="note" style="margin:12px 0 6px">
+        <b>Backup copy:</b> if the clipboard didn't work, long-press in the box below →
+        <b>Select all</b> → <b>Copy</b>, and paste that to Claude.
+      </div>
+      <textarea id="commit-out" readonly rows="8"></textarea>
+    </div>
   </div>
 </main>
 <div id="status"></div>
@@ -389,12 +399,16 @@ $('#commit-plan').onclick=async ()=>{
     '# guestId | name | tableId | seat\n'+
     ch.map(c=>`${c.id} | ${c.name} | ${c.to.table} | ${c.to.seat}`).join('\n')+
     '\n\n# (x/y should be taken from that table+seat position)\n';
-  try{ await navigator.clipboard.writeText(blob); toast('Copied '+ch.length+' change(s) — paste to Claude'); }
+  // always show the text on screen too — the clipboard can silently fail on mobile
+  $('#commit-box').style.display='block'; $('#commit-out').value=blob;
+  let ok=false;
+  try{ await navigator.clipboard.writeText(blob); ok=true; }
   catch(e){
-    const ta=document.createElement('textarea'); ta.value=blob; document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); toast('Copied — paste to Claude'); }catch(_){ toast('Copy failed — use ⬇ seating-data.json'); }
-    ta.remove();
+    try{ $('#commit-out').select(); ok=document.execCommand('copy'); }catch(_){}
   }
+  toast(ok ? 'Copied '+ch.length+' change(s) — paste to Claude'
+           : 'Copy blocked — long-press the box below to copy');
+  $('#commit-box').scrollIntoView({behavior:'smooth', block:'nearest'});
 };
 $('#dl-plan').onclick=()=>{
   const out=JSON.parse(JSON.stringify(DATA));
