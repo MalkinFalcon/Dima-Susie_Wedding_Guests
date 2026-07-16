@@ -2585,12 +2585,19 @@ document.getElementById('mute').onclick=()=>{ const m=audio.toggle(); document.g
 document.getElementById('replay').onclick=()=>{ if(currentParty){ document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on'); clearFloaters(); reveal(currentParty);} };
 document.getElementById('zoomtoggle').onclick=toggleZoom;
 document.getElementById('back').onclick=()=>{
+  const banner=document.getElementById('banner'), ss=document.getElementById('search-screen');
   document.getElementById('zoomtoggle').classList.remove('show');
-  document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on');
+  // hide the banner instantly (transition off) so it never slides down over the returning menu
+  banner.style.transition='none'; banner.classList.remove('up');
+  document.getElementById('foot').classList.remove('on');
   clearFloaters(); audio.stopWaltz(); document.getElementById('vig').classList.remove('on');
   document.body.classList.remove('searching','curtains','curtains-open');
-  document.getElementById('search-screen').classList.remove('gone');
-  fitRoom(false); const q=document.getElementById('q'); q.value=''; q.dispatchEvent(new Event('input'));
+  // menu zooms/fades back in over the FROZEN room — no camera motion showing through it
+  ss.classList.remove('gone');
+  const q=document.getElementById('q'); q.value=''; q.dispatchEvent(new Event('input'));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ banner.style.transition=''; }));  // restore for next reveal
+  // once the menu has fully covered the room, reset the camera invisibly (guarded if a new reveal started)
+  setTimeout(()=>{ if(!ss.classList.contains('gone')) fitRoom(true); }, 720);
 };
 
 /* pan / pinch after arrival */
