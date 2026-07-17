@@ -2806,13 +2806,15 @@ function eggParade(){
   clips.forEach((n,i)=>{
     const r=Math.floor(i/cols), c=i%cols;
     const slot=document.createElement('div'); slot.className='slot';
-    slot.style.left = (((c+0.5)/cols)*100 + (Math.random()*9-4.5)).toFixed(1)+'%';
-    slot.style.top  = (((r+0.5)/rows)*100 + (Math.random()*7-3.5)).toFixed(1)+'%';
+    slot.style.left = (((c+0.5)/cols)*100 + (Math.random()*9-4.5)).toFixed(1)+'%';  // jitter across only
+    slot.style.top  = (((r+0.5)/rows)*100).toFixed(1)+'%';                          // rows stay on their band
     const im=document.createElement('img');
     im.src='gifs/'+n; im.alt=''; im.setAttribute('aria-hidden','true');
-    im.style.height   = Math.min(44, (100/rows)*1.35).toFixed(1)+'vh';   // oversized => overlap
-    im.style.maxWidth = ((100/cols)*1.6).toFixed(1)+'vw';
-    im.style.setProperty('--rot', (Math.random()*18-9).toFixed(1)+'deg');
+    // 80% of the row's height leaves a clean gap above/below; the ±5° tilt grows the
+    // rendered box by ~11%, which still fits inside the band => never overlaps vertically
+    im.style.height   = ((100/rows)*0.80).toFixed(1)+'vh';
+    im.style.maxWidth = ((100/cols)*1.6).toFixed(1)+'vw';                            // may still overlap sideways
+    im.style.setProperty('--rot', (Math.random()*10-5).toFixed(1)+'deg');
     im.style.animationDelay = (i*0.08).toFixed(2)+'s';
     slot.appendChild(im); wrap.appendChild(slot);
   });
@@ -2824,8 +2826,9 @@ function eggParade(){
   setTimeout(()=>{ const w=document.getElementById('eggwrap'); if(w) w.remove(); }, 5000);
 }
 function wireEgg(el){
-  if(!el) return; let last=0;
-  el.addEventListener('pointerup',()=>{ const n=Date.now(); if(n-last<400) eggParade(); last=n; });
+  if(!el) return;
+  el.style.cursor='pointer';
+  el.addEventListener('pointerup', ()=>eggParade());   // single tap on the S&D crest
 }
 wireEgg(document.querySelector('.hero .monogram'));
 wireEgg(document.querySelector('#compact .cm'));
