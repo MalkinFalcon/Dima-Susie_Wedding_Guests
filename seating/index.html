@@ -228,6 +228,43 @@
     min-height:44px;white-space:nowrap;transition:transform .1s, background .2s;}
   .b-actions button:active{transform:scale(.93);}
   .b-actions button.primary{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
+  /* seated-with-you toggle */
+  .b-mates-btn{pointer-events:auto;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.04em;
+    color:var(--goldb);background:rgba(201,165,87,.1);border:1px solid rgba(201,165,87,.35);
+    border-radius:999px;padding:7px 14px;margin-top:10px;cursor:pointer;min-height:34px;}
+  .b-mates-btn:active{transform:scale(.95);}
+  #b-mates{display:none;pointer-events:auto;margin-top:9px;padding-top:9px;border-top:1px solid rgba(201,165,87,.25);
+    font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.45;color:#eedfc0;max-height:23vh;overflow-y:auto;}
+  #b-mates.show{display:block;}
+  #b-mates .mt{font-family:'Inter',sans-serif;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--rose);margin:4px 0 1px;}
+
+  /* countdown at the very bottom of the landing screen */
+  #count{margin-top:auto;flex-shrink:0;padding:12px 0 6px;text-align:center;
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);opacity:.85;}
+  #count b{color:var(--goldb);font-weight:700;}
+  body.searching #count{display:none;}
+
+  /* S&D double-tap easter egg parade */
+  #eggwrap{position:fixed;inset:0;z-index:13;pointer-events:none;overflow:hidden;}
+  #eggwrap img{position:absolute;bottom:0;height:32vh;width:auto;transform:translateX(-60vw);
+    animation:marchX 6.8s linear forwards;filter:drop-shadow(0 8px 14px rgba(0,0,0,.4));}
+  @keyframes marchX{from{transform:translateX(-60vw);}to{transform:translateX(112vw);}}
+
+  /* desktop gate */
+  #deskgate{display:none;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;text-align:center;padding:30px;
+    background:radial-gradient(ellipse 80% 55% at 50% 18%, rgba(112,40,52,.55), transparent 70%), linear-gradient(180deg,#33111a 0%,var(--void) 75%);}
+  #deskgate.on{display:flex;}
+  .dg-mono{width:104px;height:104px;}
+  .dg-big{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,58px);font-weight:700;color:var(--goldb);
+    line-height:1.1;text-shadow:0 0 30px rgba(242,214,146,.4);}
+  .dg-sub{font-size:15px;line-height:1.6;color:var(--rose);}
+  .dg-qr{width:190px;height:190px;padding:12px;background:#fdfbf4;border-radius:14px;border:1px solid rgba(201,165,87,.6);}
+  .dg-qr:empty{display:none;}
+  .dg-qr svg{display:block;width:100%;height:100%;}
+  .dg-url{font-size:14px;font-weight:600;letter-spacing:.06em;color:var(--cream);}
+  #dg-go{font:inherit;font-size:12px;color:var(--rose);background:none;border:none;cursor:pointer;
+    text-decoration:underline;opacity:.7;margin-top:6px;}
 
   .footer-note{position:fixed;left:0;right:0;bottom:6px;z-index:5;text-align:center;font-size:11px;
     color:rgba(236,217,180,.4);letter-spacing:.08em;pointer-events:none;opacity:0;transition:opacity .8s;}
@@ -311,6 +348,19 @@
 
   <div id="seeking"><span class="ring"></span> Finding your seat…</div>
   <img id="dance" alt="" aria-hidden="true" src="gifs/default.webp">
+
+  <div id="deskgate">
+    <svg class="dg-mono" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" stroke="#c9a557" stroke-width="1.5" opacity=".75"/>
+      <circle cx="50" cy="50" r="41" stroke="#c9a557" stroke-width=".8" opacity=".4"/>
+      <text x="50" y="60" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="38" fill="#f2d692">S&amp;D</text>
+    </svg>
+    <div class="dg-big">Please open on your&nbsp;phone&nbsp;📱</div>
+    <div class="dg-sub">This little bit of magic is made for your hands, not your mouse.<br>Scan below — Отсканируйте телефоном</div>
+    <div class="dg-qr" id="dg-qr"></div>
+    <div class="dg-url">susieanddima.com/seating</div>
+    <button id="dg-go" type="button">continue on desktop anyway →</button>
+  </div>
   <div id="dance-shade" aria-hidden="true"></div>
 
   <div id="search-screen">
@@ -342,6 +392,7 @@
       <div class="search-hint" id="hint"></div>
     </div>
     <div id="results"></div>
+    <div id="count" aria-live="polite"></div>
   </div>
 
   <div class="curt" id="curtL"></div>
@@ -362,6 +413,8 @@
     <div class="b-table" id="b-table"></div>
     <div class="b-msg" id="b-msg"></div>
     <div class="b-where" id="b-where"></div>
+    <button class="b-mates-btn" id="b-mates-btn" type="button">👥 Seated with you <span id="b-mates-arrow">▾</span></button>
+    <div id="b-mates"></div>
     <div class="b-actions">
       <button id="replay">↻ Watch again</button>
       <button id="back" class="primary">Find another</button>
@@ -2391,6 +2444,19 @@ function showBanner(party){
   const msg=(window.CUSTOM_MESSAGES&&(window.CUSTOM_MESSAGES[party.groupId]||window.CUSTOM_MESSAGES[party.label]))||party.message||'';
   const bm=document.getElementById('b-msg'); bm.textContent=msg; bm.classList.toggle('show',!!msg);
   document.querySelector('.banner-inner').classList.toggle('has-msg', !!msg);
+  // "Seated with you": everyone else at the party's table(s), collapsed by default
+  const ids=new Set(party.members.map(m=>m.id));
+  const mates=party.tables.map(tid=>({
+    num:TNUM[tid],
+    names:DATA.guests.filter(g=>g.table===tid && !ids.has(g.id))
+                     .sort((a,b)=>a.seat-b.seat).map(g=>g.name)
+  })).filter(t=>t.names.length);
+  const mbtn=document.getElementById('b-mates-btn'), mbox=document.getElementById('b-mates');
+  mbox.classList.remove('show'); document.getElementById('b-mates-arrow').textContent='▾';
+  if(mates.length){
+    mbtn.style.display='';
+    mbox.innerHTML = mates.map(t=> (mates.length>1?`<div class="mt">Table ${t.num}</div>`:'') + escapeHtml(joinNames(t.names))).join('');
+  } else { mbtn.style.display='none'; mbox.innerHTML=''; }
   zoomedOut=false; updateZoomBtn();
   document.getElementById('zoomtoggle').classList.add('show');
   document.getElementById('banner').classList.add('up');
@@ -2644,6 +2710,71 @@ document.getElementById('mute').onclick=()=>{ const m=audio.toggle(); document.g
   : '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/>'; };
 document.getElementById('replay').onclick=()=>{ if(currentParty){ document.getElementById('banner').classList.remove('up'); document.getElementById('foot').classList.remove('on'); clearFloaters(); reveal(currentParty);} };
 document.getElementById('zoomtoggle').onclick=toggleZoom;
+document.getElementById('b-mates-btn').onclick=()=>{
+  const box=document.getElementById('b-mates');
+  const open=box.classList.toggle('show');
+  document.getElementById('b-mates-arrow').textContent=open?'▴':'▾';
+};
+
+/* ---------- countdown to 6:30pm on the landing screen ---------- */
+function tickCount(){
+  const el=document.getElementById('count'); if(!el) return;
+  const now=new Date();
+  const target=new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 30, 0);
+  const diff=target-now;
+  if(diff<=0){ el.innerHTML='Event has started!&nbsp;🥂'; return; }
+  const mins=Math.ceil(diff/60000);
+  el.innerHTML='You’ve got <b>'+mins.toLocaleString()+'</b> '+(mins===1?'minute':'minutes')+'&nbsp;⏳';
+}
+tickCount(); setInterval(tickCount, 20000);
+
+/* ---------- S&D double-tap easter egg: the full dance cast parades through ---------- */
+function eggBurst(x,y){
+  for(let i=0;i<26;i++){
+    const d=document.createElement('div');
+    const ang=Math.random()*Math.PI*2, dist=60+Math.random()*150, sz=3+Math.random()*5;
+    d.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;border-radius:50%;
+      background:radial-gradient(circle,#fff3cf,#e0b95c);z-index:14;pointer-events:none;box-shadow:0 0 8px #f2d692;
+      transform:translate(-50%,-50%);transition:transform 1s cubic-bezier(.1,.7,.3,1),opacity 1s;`;
+    document.body.appendChild(d);
+    requestAnimationFrame(()=>{ d.style.transform=`translate(${Math.cos(ang)*dist-3}px,${Math.sin(ang)*dist-40}px) scale(0)`; d.style.opacity='0'; });
+    setTimeout(()=>d.remove(),1100);
+  }
+}
+function eggParade(){
+  if(document.getElementById('eggwrap')) return;          // one at a time
+  const wrap=document.createElement('div'); wrap.id='eggwrap';
+  ['default','gun','shot','80s','soccer'].forEach((n,i)=>{
+    const im=document.createElement('img');
+    im.src='gifs/'+n+'.webp'; im.alt=''; im.style.animationDelay=(i*1.05)+'s';
+    wrap.appendChild(im);
+  });
+  document.body.appendChild(wrap);
+  audio.arrival();
+  if(navigator.vibrate) navigator.vibrate([16,50,16]);
+  for(let i=0;i<3;i++) setTimeout(()=>eggBurst(innerWidth*(0.25+Math.random()*0.5), innerHeight*(0.2+Math.random()*0.3)), i*700);
+  setTimeout(()=>wrap.remove(), 6800+4*1050+400);
+}
+function wireEgg(el){
+  if(!el) return; let last=0;
+  el.addEventListener('pointerup',()=>{ const n=Date.now(); if(n-last<400) eggParade(); last=n; });
+}
+wireEgg(document.querySelector('.hero .monogram'));
+wireEgg(document.querySelector('#compact .cm'));
+
+/* ---------- desktop gate: this experience is for phones ---------- */
+(function(){
+  const fine=matchMedia('(pointer:fine)').matches;
+  const touch=('ontouchstart' in window) || (navigator.maxTouchPoints|0)>0;
+  if(!(fine && !touch && innerWidth>=900)) return;
+  if(sessionStorage.getItem('sd-desk-ok')) return;
+  const g=document.getElementById('deskgate'); g.classList.add('on');
+  fetch('../qr/qr_inline.svg').then(r=>r.ok?r.text():null).then(s=>{
+    if(s) document.getElementById('dg-qr').innerHTML =
+      s.replace('width="41" height="41"','viewBox="0 0 41 41" width="100%" height="100%" shape-rendering="crispEdges"');
+  }).catch(()=>{});
+  document.getElementById('dg-go').onclick=()=>{ sessionStorage.setItem('sd-desk-ok','1'); g.classList.remove('on'); };
+})();
 document.getElementById('back').onclick=()=>{
   const banner=document.getElementById('banner'), ss=document.getElementById('search-screen');
   document.getElementById('zoomtoggle').classList.remove('show');
