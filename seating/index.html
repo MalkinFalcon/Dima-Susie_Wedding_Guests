@@ -241,6 +241,20 @@
   .b-actions button.primary{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
   .b-replay-hint{margin-top:7px;font-size:11.5px;font-style:italic;letter-spacing:.02em;
     color:var(--rose);opacity:.85;}
+  /* left/right neighbours — deliberately small and quiet, no glow */
+  .b-nbrs{font-family:'Inter',sans-serif;font-size:11.5px;letter-spacing:.02em;color:var(--rose);
+    margin-top:6px;opacity:.9;}
+  .b-nbrs b{color:#e2cba0;font-weight:600;}
+
+  /* glowing guide trail: stairs -> seat (lives inside the room SVG, so it pans/zooms with it) */
+  .gp-glow{fill:none;stroke:rgba(242,214,146,.2);stroke-width:14;stroke-linecap:round;stroke-linejoin:round;
+    opacity:0;transition:opacity 1s;}
+  .gp-dots{fill:none;stroke:#f2d692;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:.1 15;opacity:0;transition:opacity 1s;animation:gpflow 1.5s linear infinite;}
+  .gp-start{fill:#f2d692;opacity:0;transition:opacity 1s;animation:gppulse 1.8s ease-in-out infinite;}
+  .gp-on{opacity:1;}
+  @keyframes gpflow{to{stroke-dashoffset:-15.1;}}
+  @keyframes gppulse{0%,100%{r:8;}50%{r:12;}}
   /* seated-with-you toggle */
   .b-mates-btn{pointer-events:auto;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.04em;
     color:var(--goldb);background:rgba(201,165,87,.1);border:1px solid rgba(201,165,87,.35);
@@ -432,6 +446,7 @@
     <div class="b-table" id="b-table"></div>
     <div class="b-msg" id="b-msg"></div>
     <div class="b-where" id="b-where"></div>
+    <div class="b-nbrs" id="b-nbrs"></div>
     <button class="b-mates-btn" id="b-mates-btn" type="button">👥 Seated with you <span id="b-mates-arrow">▾</span></button>
     <div id="b-mates"></div>
     <div class="b-actions">
@@ -2327,7 +2342,7 @@ function tween(from,to,dur,ease,onEnd,onStep){
 
 /* ============================================================= REVEAL ==== */
 let floaters=[];
-function clearFloaters(){ floaters.forEach(f=>f.remove()); floaters=[]; document.querySelectorAll('.chair.glow').forEach(c=>c.classList.remove('glow'));
+function clearFloaters(){ clearGuide(); floaters.forEach(f=>f.remove()); floaters=[]; document.querySelectorAll('.chair.glow').forEach(c=>c.classList.remove('glow'));
   const spot=document.getElementById('spot'); if(spot) spot.setAttribute('opacity','0');
   const zh=document.getElementById('zoomhint'); if(zh) zh.classList.remove('on');
   const sk=document.getElementById('seeking'); if(sk) sk.classList.remove('on');
@@ -2399,6 +2414,93 @@ function spread(p){
   return Math.max(120, Math.hypot(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys)) + 200);
 }
 
+/* ===== glowing guide trail: stairs -> seat =====
+   A* over a 20px grid; tables (+30px margin), the stair void and walls are blocked.
+   Deterministic, and if no route exists we simply draw nothing. */
+const ENTRANCE={x:275,y:1262};                     // just below the VOID·STAIRS opening
+let GRID=null, guideEls=[];
+function buildNavGrid(){
+  const CS=20, GW=Math.ceil(1000/CS), GH=Math.ceil(1600/CS);
+  const blocked=new Uint8Array(GW*GH);
+  const tSeats={}; DATA.guests.forEach(g=>{ if(g.x!=null){ (tSeats[g.table]=tSeats[g.table]||[]).push(g); } });
+  const obs=[];
+  for(const tid in tSeats){
+    const xs=tSeats[tid].map(s=>s.x), ys=tSeats[tid].map(s=>s.y);
+    const cx=(Math.min(...xs)+Math.max(...xs))/2, cy=(Math.min(...ys)+Math.max(...ys))/2;
+    const rx=Math.max(28,(Math.max(...xs)-Math.min(...xs))/2-16)+30;
+    const ry=Math.max(28,(Math.max(...ys)-Math.min(...ys))/2-16)+30;
+    obs.push({cx,cy,rx,ry});
+  }
+  for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){
+    const x=gx*CS+CS/2, y=gy*CS+CS/2; let b=0;
+    if(x<34||x>966||y<34||y>1566) b=1;                                  // walls
+    else if(x>=28&&x<=522&&y>=1131&&y<=1259) b=1;                        // stair void (+12px margin)
+    else for(const o of obs){ const dx=(x-o.cx)/o.rx, dy=(y-o.cy)/o.ry; if(dx*dx+dy*dy<1){ b=1; break; } }
+    blocked[gy*GW+gx]=b;
+  }
+  GRID={CS,GW,GH,blocked};
+}
+function findPath(sx,sy,tx,ty){
+  if(!GRID) buildNavGrid();
+  const {CS,GW,GH,blocked}=GRID, id=(x,y)=>y*GW+x;
+  const toCell=(px,py)=>[Math.max(0,Math.min(GW-1,Math.round((px-CS/2)/CS))), Math.max(0,Math.min(GH-1,Math.round((py-CS/2)/CS)))];
+  function nearestFree(cx,cy){
+    if(!blocked[id(cx,cy)]) return [cx,cy];
+    for(let r=1;r<24;r++) for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+      if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+      const x=cx+dx,y=cy+dy;
+      if(x>=0&&y>=0&&x<GW&&y<GH&&!blocked[id(x,y)]) return [x,y];
+    }
+    return null;
+  }
+  const S=nearestFree(...toCell(sx,sy)), T=nearestFree(...toCell(tx,ty));
+  if(!S||!T) return null;
+  const open=[{x:S[0],y:S[1],g:0,f:0}], came={}, gsc={}; gsc[id(S[0],S[1])]=0;
+  const h=(x,y)=>Math.hypot(x-T[0],y-T[1]);
+  const DIRS=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.414],[1,-1,1.414],[-1,1,1.414],[-1,-1,1.414]];
+  let found=null, guard=0;
+  while(open.length && guard++<9000){
+    let bi=0; for(let i=1;i<open.length;i++) if(open[i].f<open[bi].f) bi=i;
+    const cur=open.splice(bi,1)[0];
+    if(cur.x===T[0]&&cur.y===T[1]){ found=cur; break; }
+    for(const [dx,dy,c] of DIRS){
+      const nx=cur.x+dx, ny=cur.y+dy;
+      if(nx<0||ny<0||nx>=GW||ny>=GH||blocked[id(nx,ny)]) continue;
+      if(dx&&dy && (blocked[id(cur.x+dx,cur.y)]||blocked[id(cur.x,cur.y+dy)])) continue;  // no corner cutting
+      const ng=cur.g+c, k=id(nx,ny);
+      if(gsc[k]===undefined||ng<gsc[k]){ gsc[k]=ng; came[k]=id(cur.x,cur.y); open.push({x:nx,y:ny,g:ng,f:ng+h(nx,ny)}); }
+    }
+  }
+  if(!found) return null;
+  const cells=[]; let k=id(found.x,found.y);
+  while(k!==undefined){ cells.unshift([(k%GW)*CS+CS/2, Math.floor(k/GW)*CS+CS/2]); k=came[k]; }
+  // line-of-sight smoothing so the trail is a few clean strokes, not a staircase
+  const clear=(a,b)=>{ const n2=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/9);
+    for(let i=1;i<n2;i++){ const [cx2,cy2]=toCell(a[0]+(b[0]-a[0])*i/n2, a[1]+(b[1]-a[1])*i/n2);
+      if(blocked[id(cx2,cy2)]) return false; } return true; };
+  const out=[cells[0]]; let i=0;
+  while(i<cells.length-1){ let j=cells.length-1; while(j>i+1 && !clear(cells[i],cells[j])) j--; out.push(cells[j]); i=j; }
+  return out;
+}
+function clearGuide(){ guideEls.forEach(e=>e.remove()); guideEls=[]; }
+function drawGuidePath(party){
+  clearGuide();
+  try{
+    const m=party.seated && party.seated[0]; if(!m) return;
+    const pts=findPath(ENTRANCE.x,ENTRANCE.y,m.x,m.y); if(!pts||pts.length<2) return;
+    pts.unshift([ENTRANCE.x,ENTRANCE.y]); pts.push([m.x,m.y]);
+    const d='M'+pts.map(p=>p[0].toFixed(0)+' '+p[1].toFixed(0)).join(' L ');
+    const svg=document.querySelector('#world svg'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    const glow=document.createElementNS(NS,'path'); glow.setAttribute('d',d); glow.setAttribute('class','gp-glow');
+    const dots=document.createElementNS(NS,'path'); dots.setAttribute('d',d); dots.setAttribute('class','gp-dots');
+    const start=document.createElementNS(NS,'circle'); start.setAttribute('cx',ENTRANCE.x); start.setAttribute('cy',ENTRANCE.y); start.setAttribute('r','9'); start.setAttribute('class','gp-start');
+    svg.appendChild(glow); svg.appendChild(dots); svg.appendChild(start);
+    guideEls=[glow,dots,start];
+    requestAnimationFrame(()=>requestAnimationFrame(()=>guideEls.forEach(e=>e.classList.add('gp-on'))));
+  }catch(e){ clearGuide(); }   // any surprise -> no trail, never a broken room
+}
+
 function whereText(p){
   // classify by the party's TABLE centres (stable), not the seat centroid
   const tps = DATA.tables.filter(t=>p.tables.includes(t.id));
@@ -2435,6 +2537,7 @@ function arrive(party){
     }, step*i + 100);
   });
   setTimeout(()=>showBanner(party), step*n + 320);
+  setTimeout(()=>{ if(currentParty===party) drawGuidePath(party); }, step*n + 900);
   setTimeout(()=>{ const zh=document.getElementById('zoomhint'); zh.classList.add('on'); clearTimeout(zh._t); zh._t=setTimeout(()=>zh.classList.remove('on'),6000); }, step*n + 1400);
   setTimeout(()=>{ document.getElementById('foot').textContent = `One of ${DATA.guests.length} loved ones celebrating tonight`; document.getElementById('foot').classList.add('on'); }, step*n + 900);
 }
@@ -2455,6 +2558,21 @@ function joinNames(arr){
   if(arr.length===2) return arr[0]+' & '+arr[1];
   return arr.slice(0,-1).join(', ')+' & '+arr[arr.length-1];
 }
+function computeNeighbours(party){
+  if(!party.tables || party.tables.length!==1) return null;    // split parties: skip quietly
+  const all=DATA.guests.filter(g=>g.table===party.tables[0]).sort((a,b)=>a.seat-b.seat);
+  const n=all.length; if(n<3) return null;
+  const mine=new Set(party.members.map(m=>m.id));
+  const isMine=all.map(g=>mine.has(g.id));
+  if(isMine.every(Boolean)) return null;                       // party fills the whole table
+  let left=null,right=null;
+  for(let i=0;i<n;i++){
+    if(isMine[i] && !isMine[(i+1)%n]   && left===null)  left =all[(i+1)%n].name;
+    if(isMine[i] && !isMine[(i-1+n)%n] && right===null) right=all[(i-1+n)%n].name;
+  }
+  return (left&&right) ? {left,right,solo:party.members.length===1} : null;
+}
+
 function showBanner(party){
   document.getElementById('b-party').textContent = joinNames(party.names);
   document.getElementById('b-honour').classList.toggle('show', /bride|groom/i.test(party.category||''));
@@ -2473,6 +2591,14 @@ function showBanner(party){
     names:DATA.guests.filter(g=>g.table===tid && !ids.has(g.id))
                      .sort((a,b)=>a.seat-b.seat).map(g=>g.name)
   })).filter(t=>t.names.length);
+  // quiet left/right neighbours line (seats run clockwise; facing the table, clockwise-next is your LEFT)
+  const nb=computeNeighbours(party), nbEl=document.getElementById('b-nbrs');
+  if(nb){
+    nbEl.style.display='';
+    nbEl.innerHTML = nb.solo
+      ? 'On your left <b>'+escapeHtml(nb.left)+'</b> · on your right <b>'+escapeHtml(nb.right)+'</b>'
+      : 'Either side of you: <b>'+escapeHtml(nb.right)+'</b> · <b>'+escapeHtml(nb.left)+'</b>';
+  } else { nbEl.style.display='none'; nbEl.innerHTML=''; }
   const mbtn=document.getElementById('b-mates-btn'), mbox=document.getElementById('b-mates');
   mbox.classList.remove('show'); document.getElementById('b-mates-arrow').textContent='▾';
   if(mates.length){
@@ -2769,6 +2895,45 @@ document.getElementById('b-mates-btn').onclick=()=>{
   const open=box.classList.toggle('show');
   document.getElementById('b-mates-arrow').textContent=open?'▴':'▾';
 };
+
+/* ---------- shake to shuffle: shake the phone, meet a random guest ----------
+   Enabled only where devicemotion needs no permission prompt (Android etc.);
+   iOS 13+ requires a permission dialog, so we quietly skip it there. */
+let _sx=null,_sy=null,_sz=null,_shakeHits=0,_shakeWin=0,_lastShuffle=0;
+function shakeShuffle(){
+  const now=Date.now();
+  if(now-_lastShuffle<8000) return;                                   // one shuffle per dive
+  if(!PARTIES.length) return;                                         // data not loaded yet
+  if(document.getElementById('deskgate').classList.contains('on')) return;
+  if(document.getElementById('seeking').classList.contains('on') || document.body.classList.contains('curtains')) return;
+  const pool=PARTIES.filter(p=>p.seated && p.seated.length);
+  if(!pool.length) return;
+  _lastShuffle=now;
+  const p=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('banner').classList.remove('up');
+  document.getElementById('foot').classList.remove('on');
+  document.getElementById('zoomtoggle').classList.remove('show');
+  clearFloaters();
+  if(navigator.vibrate) navigator.vibrate([20,40,20]);
+  const q=document.getElementById('q'); if(q && document.activeElement===q) q.blur();
+  reveal(p);
+}
+function onShakeMotion(e){
+  const a=e.accelerationIncludingGravity; if(!a || a.x==null) return;
+  if(_sx!==null){
+    const d=Math.abs(a.x-_sx)+Math.abs(a.y-_sy)+Math.abs(a.z-_sz);
+    if(d>30){
+      const now=Date.now();
+      if(now-_shakeWin>1100) _shakeHits=0;
+      _shakeWin=now; _shakeHits++;
+      if(_shakeHits>=3){ _shakeHits=0; shakeShuffle(); }
+    }
+  }
+  _sx=a.x; _sy=a.y; _sz=a.z;
+}
+if(window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission!=='function'){
+  addEventListener('devicemotion', onShakeMotion);
+}
 
 /* ---------- countdown to the wedding: 18 July, 6:30pm ---------- */
 const EVENT_AT = new Date(2026, 6, 18, 18, 30, 0);   // month is 0-based: 6 = July
