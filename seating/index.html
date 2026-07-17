@@ -228,6 +228,8 @@
     min-height:44px;white-space:nowrap;transition:transform .1s, background .2s;}
   .b-actions button:active{transform:scale(.93);}
   .b-actions button.primary{background:linear-gradient(180deg,var(--goldb),var(--gold));color:#3a2410;border-color:transparent;}
+  .b-replay-hint{margin-top:7px;font-size:11.5px;font-style:italic;letter-spacing:.02em;
+    color:var(--rose);opacity:.85;}
   /* seated-with-you toggle */
   .b-mates-btn{pointer-events:auto;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.04em;
     color:var(--goldb);background:rgba(201,165,87,.1);border:1px solid rgba(201,165,87,.35);
@@ -419,6 +421,7 @@
       <button id="replay">↻ Watch again</button>
       <button id="back" class="primary">Find another</button>
     </div>
+    <div class="b-replay-hint">might get a different Dima &amp; Susie this time…</div>
   </div></div>
 
   <div class="footer-note" id="foot"></div>
@@ -2313,13 +2316,15 @@ function clearFloaters(){ floaters.forEach(f=>f.remove()); floaters=[]; document
   const sk=document.getElementById('seeking'); if(sk) sk.classList.remove('on');
   stopDance(); }
 
+const DANCE_CLIPS=['default.webp','gun.webp','shot.webp','80s.webp','soccer.webp'];
+let lastClip=null;
 function startDance(){
   const d=document.getElementById('dance'), s=document.getElementById('dance-shade');
-  if(d){ // per-party dance clip (falls back to default); restart from cache so the pair enters from the left each time
-    const dm = (typeof DANCE_MAP!=='undefined') ? DANCE_MAP : {};
-    const file = (currentParty && (dm[currentParty.groupId] || dm[currentParty.label])) || 'default.webp';
-    const url = 'gifs/' + file;
-    d.src=''; d.src=url; d.classList.add('on');
+  if(d){ // random clip each time (never the same twice in a row) — replaces the old per-party mapping
+    const pool=DANCE_CLIPS.filter(f=>f!==lastClip);
+    const file=pool[Math.floor(Math.random()*pool.length)];
+    lastClip=file;
+    d.src=''; d.src='gifs/'+file; d.classList.add('on');
   }
   if(s) s.classList.add('on');
 }
