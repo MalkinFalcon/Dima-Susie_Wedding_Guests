@@ -86,6 +86,17 @@
   #search-screen.gone{opacity:0;transform:scale(1.08);pointer-events:none;}
   /* faint, slow, glowing sparkles — sits above the gradient, behind the text */
   #sparkles{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;}
+  /* slow drifting aurora washes, behind the sparkles */
+  #search-screen::before, #search-screen::after{content:'';position:absolute;z-index:-2;pointer-events:none;
+    border-radius:50%;filter:blur(46px);opacity:.5;}
+  #search-screen::before{width:78vw;height:52vh;left:-18vw;top:2vh;
+    background:radial-gradient(circle, rgba(138,47,61,.62), transparent 70%);
+    animation:aur1 26s ease-in-out infinite alternate;}
+  #search-screen::after{width:70vw;height:46vh;right:-16vw;top:26vh;
+    background:radial-gradient(circle, rgba(201,165,87,.3), transparent 70%);
+    animation:aur2 34s ease-in-out infinite alternate;}
+  @keyframes aur1{from{transform:translate(0,0) scale(1);}   to{transform:translate(26vw,16vh) scale(1.25);}}
+  @keyframes aur2{from{transform:translate(0,0) scale(1.1);} to{transform:translate(-24vw,-12vh) scale(.9);}}
 
   .hero{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
   .crest{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.7;max-width:320px;
@@ -244,13 +255,18 @@
   #count{margin-top:auto;flex-shrink:0;padding:12px 0 6px;text-align:center;
     font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);opacity:.85;}
   #count b{color:var(--goldb);font-weight:700;}
+  #count .c-when{display:block;margin-top:3px;font-size:10px;letter-spacing:.22em;color:var(--gold);opacity:.75;}
   body.searching #count{display:none;}
 
-  /* S&D double-tap easter egg parade */
+  /* S&D double-tap easter egg — a grid of dancers erupting all over the screen */
   #eggwrap{position:fixed;inset:0;z-index:13;pointer-events:none;overflow:hidden;}
-  #eggwrap img{position:absolute;bottom:0;height:32vh;width:auto;transform:translateX(-60vw);
-    animation:marchX 6.8s linear forwards;filter:drop-shadow(0 8px 14px rgba(0,0,0,.4));}
-  @keyframes marchX{from{transform:translateX(-60vw);}to{transform:translateX(112vw);}}
+  #eggwrap .slot{position:absolute;transform:translate(-50%,-50%);}
+  #eggwrap .slot img{display:block;width:auto;opacity:0;transform:scale(.3) rotate(var(--rot));
+    animation:eggpop .5s cubic-bezier(.2,1.6,.4,1) forwards;
+    filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));}
+  @keyframes eggpop{to{opacity:1;transform:scale(1) rotate(var(--rot));}}
+  #eggwrap.out .slot img{animation:eggout .4s ease forwards;}
+  @keyframes eggout{to{opacity:0;transform:scale(.65) rotate(var(--rot));}}
 
   /* desktop gate */
   #deskgate{display:none;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;justify-content:center;
@@ -418,8 +434,8 @@
     <button class="b-mates-btn" id="b-mates-btn" type="button">👥 Seated with you <span id="b-mates-arrow">▾</span></button>
     <div id="b-mates"></div>
     <div class="b-actions">
-      <button id="replay">↻ Watch again</button>
-      <button id="back" class="primary">Find another</button>
+      <button id="replay" class="primary">↻ Watch again</button>
+      <button id="back">Find another</button>
     </div>
     <div class="b-replay-hint">might get a different Dima &amp; Susie this time…</div>
   </div></div>
@@ -2567,7 +2583,7 @@ vvSize();
 
 /* ============================================================= AUDIO ==== */
 const audio = (function(){
-  let ctx=null, muted=localStorage.getItem('ds-mute')==='1', waltzTimer=null, master=null, ok=true, waltzUsed=false, waltzBus=null;
+  let ctx=null, muted=localStorage.getItem('ds-mute')==='1', waltzTimer=null, master=null, ok=true, waltzBus=null, waltzFadeT=null, waltzStopT=null;
   function ensure(){ if(!ok) return false;
     try{
       if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ok=false;return false;}
@@ -2590,7 +2606,8 @@ const audio = (function(){
     [14,1],[12,.5],[9,.5],[7,1.5],[9,.5],[12,1],[16,2]
   ];
   const st=n=>A*Math.pow(2,n/12);
-  function startWaltz(){ if(waltzUsed || waltzTimer) return; waltzUsed=true;
+  function startWaltz(){
+    stopWaltz();                                   // clean slate so every reveal gets fresh music
     waltzBus=ctx.createGain(); waltzBus.gain.value=1; waltzBus.connect(master);
     const beat=0.36;
     function schedule(){
@@ -2601,11 +2618,17 @@ const audio = (function(){
     }
     schedule();
     waltzTimer=setInterval(schedule, mel.reduce((s,m)=>s+m[1],0)*0.36*1000);
-    // load-screen tune plays once per session: hold ~10s, then fade out (never auto-replays without a page refresh)
-    setTimeout(()=>{ if(ctx && waltzBus){ const now=ctx.currentTime; waltzBus.gain.cancelScheduledValues(now); waltzBus.gain.setValueAtTime(waltzBus.gain.value||1, now); waltzBus.gain.linearRampToValueAtTime(0.0001, now+1.8); } }, 10000);
-    setTimeout(stopWaltz, 12000);
+    // plays on every reveal: hold ~10s, then fade out
+    const bus=waltzBus;
+    waltzFadeT=setTimeout(()=>{ if(ctx && bus){ const now=ctx.currentTime; bus.gain.cancelScheduledValues(now); bus.gain.setValueAtTime(bus.gain.value||1, now); bus.gain.linearRampToValueAtTime(0.0001, now+1.8); } }, 10000);
+    waltzStopT=setTimeout(stopWaltz, 12000);
   }
-  function stopWaltz(){ if(waltzTimer){ clearInterval(waltzTimer); waltzTimer=null; } }
+  function stopWaltz(){
+    if(waltzTimer){ clearInterval(waltzTimer); waltzTimer=null; }
+    if(waltzFadeT){ clearTimeout(waltzFadeT); waltzFadeT=null; }
+    if(waltzStopT){ clearTimeout(waltzStopT); waltzStopT=null; }
+    if(waltzBus){ try{ waltzBus.disconnect(); }catch(e){} waltzBus=null; }
+  }
   function arrival(){ const t=ctx.currentTime+0.02;
     const scale=[0,2,4,5,7,9,11,12,14,16,19,24];
     scale.forEach((n,i)=>note(st(n+7),t+i*0.045,.5,'triangle',.12,.5));
@@ -2673,18 +2696,27 @@ function startSparkles(){
   const gStar=star('242,214,146'), cStar=star('255,246,224');
   function size(){ W=cv.width=innerWidth*d; H=cv.height=innerHeight*d; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
   size();
-  const N=Math.min(72, Math.max(36, Math.floor(innerWidth/11)));   // plenty of activity
+  const N=Math.min(96, Math.max(48, Math.floor(innerWidth/8)));   // lots of life
   for(let i=0;i<N;i++){
     const isStar=Math.random()<0.45;
     parts.push({
       x:Math.random()*W, y:Math.random()*H,
       r:(isStar? Math.random()*13+7 : Math.random()*17+8)*d,
-      s:(Math.random()*0.07+0.015)*d,          // still a slow, calm drift
-      a:(isStar? Math.random()*0.24+0.16 : Math.random()*0.18+0.10),  // brighter, more present
-      ph:Math.random()*6.283, tw:Math.random()*0.6+0.5,
-      rot:Math.random()*6.283, rs:(Math.random()-0.5)*0.0006,         // stars turn very slowly
+      s:(Math.random()*0.42+0.10)*d,           // ~6x faster rise
+      sway:(Math.random()*0.55+0.18)*d,        // real horizontal wander
+      swayF:900+Math.random()*1400,
+      a:(isStar? Math.random()*0.24+0.16 : Math.random()*0.18+0.10),
+      ph:Math.random()*6.283, tw:Math.random()*1.6+0.9,             // livelier twinkle
+      rot:Math.random()*6.283, rs:(Math.random()-0.5)*0.02,          // stars spin visibly
       isStar, spr:isStar ? (Math.random()<0.7?gStar:cStar) : (Math.random()<0.7?gHalo:cHalo)
     });
+  }
+  // occasional shooting star
+  let shoot=null, nextShoot=1200;
+  function newShoot(){
+    const fromLeft=Math.random()<0.5;
+    shoot={ x: fromLeft? -60*d : W+60*d, y: (0.08+Math.random()*0.5)*H,
+            vx:(fromLeft?1:-1)*(7+Math.random()*5)*d, vy:(1.6+Math.random()*2.2)*d, life:1 };
   }
   function frame(t){
     requestAnimationFrame(frame);
@@ -2692,16 +2724,32 @@ function startSparkles(){
     c.clearRect(0,0,W,H);
     c.globalCompositeOperation='lighter';              // additive → glow, never darkens
     for(const p of parts){
-      p.y-=p.s; p.x+=Math.sin(t/4600+p.ph)*0.09*d;     // slow upward drift + faint sway
+      p.y-=p.s; p.x+=Math.sin(t/p.swayF+p.ph)*p.sway;
       if(p.y<-p.r){ p.y=H+p.r; p.x=Math.random()*W; }
-      c.globalAlpha=p.a*(0.45+0.55*Math.sin(t/1600*p.tw+p.ph));  // slow twinkle
+      if(p.x<-p.r) p.x=W+p.r; else if(p.x>W+p.r) p.x=-p.r;
+      c.globalAlpha=p.a*(0.35+0.65*Math.sin(t/900*p.tw+p.ph));
       if(p.isStar){
-        p.rot+=p.rs*16;
+        p.rot+=p.rs;
         c.save(); c.translate(p.x,p.y); c.rotate(p.rot);
         c.drawImage(p.spr, -p.r/2, -p.r/2, p.r, p.r); c.restore();
       } else {
         c.drawImage(p.spr, p.x-p.r/2, p.y-p.r/2, p.r, p.r);
       }
+    }
+    // shooting star: a bright head with a tapered tail
+    nextShoot--;
+    if(!shoot && nextShoot<=0){ newShoot(); nextShoot=260+Math.random()*420; }
+    if(shoot){
+      shoot.x+=shoot.vx; shoot.y+=shoot.vy; shoot.life-=0.012;
+      const tail=16;
+      const grd=c.createLinearGradient(shoot.x,shoot.y, shoot.x-shoot.vx*tail, shoot.y-shoot.vy*tail);
+      grd.addColorStop(0,'rgba(255,246,224,'+(0.75*Math.max(0,shoot.life))+')');
+      grd.addColorStop(1,'rgba(255,246,224,0)');
+      c.globalAlpha=1; c.strokeStyle=grd; c.lineWidth=2.2*d; c.lineCap='round';
+      c.beginPath(); c.moveTo(shoot.x,shoot.y); c.lineTo(shoot.x-shoot.vx*tail, shoot.y-shoot.vy*tail); c.stroke();
+      c.globalAlpha=0.9*Math.max(0,shoot.life);
+      c.drawImage(cStar, shoot.x-9*d, shoot.y-9*d, 18*d, 18*d);
+      if(shoot.life<=0 || shoot.x<-120*d || shoot.x>W+120*d || shoot.y>H+120*d) shoot=null;
     }
     c.globalAlpha=1; c.globalCompositeOperation='source-over';
   }
@@ -2721,17 +2769,17 @@ document.getElementById('b-mates-btn').onclick=()=>{
   document.getElementById('b-mates-arrow').textContent=open?'▴':'▾';
 };
 
-/* ---------- countdown to 6:30pm on the landing screen ---------- */
+/* ---------- countdown to the wedding: 18 July, 6:30pm ---------- */
+const EVENT_AT = new Date(2026, 6, 18, 18, 30, 0);   // month is 0-based: 6 = July
 function tickCount(){
   const el=document.getElementById('count'); if(!el) return;
-  const now=new Date();
-  const target=new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 30, 0);
-  const diff=target-now;
-  if(diff<=0){ el.innerHTML='Event has started!&nbsp;🥂'; return; }
-  const mins=Math.ceil(diff/60000);
-  el.innerHTML='You’ve got <b>'+mins.toLocaleString()+'</b> '+(mins===1?'minute':'minutes')+'&nbsp;⏳';
+  const diff=EVENT_AT-new Date();
+  if(diff<=0){ el.innerHTML='Event has started!&nbsp;🥂<span class="c-when">18 July · 6:30 pm</span>'; return; }
+  const total=Math.ceil(diff/60000), h=Math.floor(total/60), m=total%60;
+  const hs='<b>'+h+'</b> '+(h===1?'hour':'hours'), ms='<b>'+m+'</b> '+(m===1?'minute':'minutes');
+  el.innerHTML='You’ve got '+(h? hs+' '+ms : ms)+'&nbsp;⏳<span class="c-when">18 July · 6:30 pm</span>';
 }
-tickCount(); setInterval(tickCount, 20000);
+tickCount(); setInterval(tickCount, 15000);
 
 /* ---------- S&D double-tap easter egg: the full dance cast parades through ---------- */
 function eggBurst(x,y){
@@ -2746,19 +2794,34 @@ function eggBurst(x,y){
     setTimeout(()=>d.remove(),1100);
   }
 }
+/* MAYHEM: every clip pops on screen at once in a grid (auto-splits into columns as
+   you add more, e.g. 10 clips -> 2 cols x 5 rows), oversized so they overlap.
+   Lasts 5s, then clears itself. The layer is pointer-events:none throughout, so
+   nothing is ever left unclickable. */
 function eggParade(){
   if(document.getElementById('eggwrap')) return;          // one at a time
   const wrap=document.createElement('div'); wrap.id='eggwrap';
-  ['default','gun','shot','80s','soccer'].forEach((n,i)=>{
+  const clips=DANCE_CLIPS, N=clips.length;
+  const cols = N<=2 ? 1 : 2, rows = Math.ceil(N/cols);
+  clips.forEach((n,i)=>{
+    const r=Math.floor(i/cols), c=i%cols;
+    const slot=document.createElement('div'); slot.className='slot';
+    slot.style.left = (((c+0.5)/cols)*100 + (Math.random()*9-4.5)).toFixed(1)+'%';
+    slot.style.top  = (((r+0.5)/rows)*100 + (Math.random()*7-3.5)).toFixed(1)+'%';
     const im=document.createElement('img');
-    im.src='gifs/'+n+'.webp'; im.alt=''; im.style.animationDelay=(i*1.05)+'s';
-    wrap.appendChild(im);
+    im.src='gifs/'+n; im.alt=''; im.setAttribute('aria-hidden','true');
+    im.style.height   = Math.min(44, (100/rows)*1.35).toFixed(1)+'vh';   // oversized => overlap
+    im.style.maxWidth = ((100/cols)*1.6).toFixed(1)+'vw';
+    im.style.setProperty('--rot', (Math.random()*18-9).toFixed(1)+'deg');
+    im.style.animationDelay = (i*0.08).toFixed(2)+'s';
+    slot.appendChild(im); wrap.appendChild(slot);
   });
   document.body.appendChild(wrap);
   audio.arrival();
-  if(navigator.vibrate) navigator.vibrate([16,50,16]);
-  for(let i=0;i<3;i++) setTimeout(()=>eggBurst(innerWidth*(0.25+Math.random()*0.5), innerHeight*(0.2+Math.random()*0.3)), i*700);
-  setTimeout(()=>wrap.remove(), 6800+4*1050+400);
+  if(navigator.vibrate) navigator.vibrate([16,50,16,50,26]);
+  for(let i=0;i<4;i++) setTimeout(()=>eggBurst(innerWidth*(0.15+Math.random()*0.7), innerHeight*(0.15+Math.random()*0.6)), i*430);
+  setTimeout(()=>wrap.classList.add('out'), 4550);        // fade the whole lot
+  setTimeout(()=>{ const w=document.getElementById('eggwrap'); if(w) w.remove(); }, 5000);
 }
 function wireEgg(el){
   if(!el) return; let last=0;
