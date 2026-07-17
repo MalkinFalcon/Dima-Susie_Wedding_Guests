@@ -2553,6 +2553,7 @@ function arrive(party){
     }, step*i + 100);
   });
   setTimeout(()=>showBanner(party), step*n + 320);
+  setTimeout(()=>{ if(currentParty===party){ const sp2=screenPos(party.cx, party.cy); confettiBurst(sp2.x, sp2.y); } }, step*n + 380);
   setTimeout(()=>{ if(currentParty===party) drawGuidePath(party); }, step*n + 900);
   setTimeout(()=>{ const zh=document.getElementById('zoomhint'); zh.classList.add('on'); clearTimeout(zh._t); zh._t=setTimeout(()=>zh.classList.remove('on'),6000); }, step*n + 1400);
   // once the pinch hint retires, tease the shake easter egg (only where shake actually works)
@@ -2649,6 +2650,43 @@ function toggleZoom(){
     zoomedOut=true;
   }
   updateZoomBtn();
+}
+
+/* celebration confetti: paper pieces in the wedding palette erupt from the found
+   seats and flutter down. Screen-space, pointer-events-free, self-removing. */
+function confettiBurst(x,y){
+  const COLORS=['#f2d692','#c9a557','#f6ecd4','#c98b87','#fff3d0'];
+  const N=Math.min(60, Math.max(36, Math.floor(innerWidth/9)));
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;';
+  document.body.appendChild(wrap);
+  const parts=[];
+  for(let i=0;i<N;i++){
+    const el=document.createElement('div');
+    const w=5+Math.random()*6, h=4+Math.random()*5;
+    el.style.cssText='position:absolute;left:0;top:0;width:'+w+'px;height:'+h+'px;'+
+      'border-radius:'+(Math.random()<.25?'50%':'1px')+';background:'+COLORS[i%COLORS.length]+
+      ';will-change:transform;box-shadow:0 0 5px rgba(242,214,146,.35);';
+    wrap.appendChild(el);
+    const ang=-Math.PI/2+(Math.random()-0.5)*1.7;          // upward fan
+    const sp=5.5+Math.random()*9;
+    parts.push({el, x, y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
+      rz:Math.random()*360, rx:Math.random()*360,
+      vrz:(Math.random()-0.5)*24, vrx:(Math.random()-0.5)*28});
+  }
+  const t0=performance.now(), DUR=2400;
+  (function step(now){
+    const t=now-t0;
+    const fade=t>DUR-500 ? Math.max(0,(DUR-t)/500) : 1;
+    for(const p of parts){
+      p.vy+=0.32; p.vx*=0.985;                             // gravity + drag
+      p.x+=p.vx; p.y+=p.vy;
+      p.rz+=p.vrz; p.rx+=p.vrx;
+      p.el.style.transform='translate('+p.x.toFixed(1)+'px,'+p.y.toFixed(1)+'px) rotateZ('+p.rz.toFixed(0)+'deg) rotateX('+p.rx.toFixed(0)+'deg)';
+      p.el.style.opacity=fade;
+    }
+    if(t<DUR && wrap.isConnected) requestAnimationFrame(step); else wrap.remove();
+  })(performance.now());
 }
 
 /* gold ember burst */
