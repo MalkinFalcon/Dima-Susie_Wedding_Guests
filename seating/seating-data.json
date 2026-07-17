@@ -490,9 +490,9 @@
    "groupId": "manny-jo",
    "category": "Friends",
    "table": "table-4",
-   "seat": 3,
-   "x": 931.9,
-   "y": 344.0
+   "seat": 8,
+   "x": 772.1,
+   "y": 396.0
   },
   {
    "id": "manny-jo-p1",
@@ -501,9 +501,9 @@
    "groupId": "manny-jo",
    "category": "Friends",
    "table": "table-4",
-   "seat": 4,
-   "x": 931.9,
-   "y": 396.0
+   "seat": 7,
+   "x": 802.6,
+   "y": 438.0
   },
   {
    "id": "george-adriana-p0",
@@ -534,9 +534,9 @@
    "groupId": "dima-sasha",
    "category": "Friends",
    "table": "table-4",
-   "seat": 7,
-   "x": 802.6,
-   "y": 438.0
+   "seat": 4,
+   "x": 931.9,
+   "y": 396.0
   },
   {
    "id": "dima-sasha-p1",
@@ -545,9 +545,9 @@
    "groupId": "dima-sasha",
    "category": "Friends",
    "table": "table-4",
-   "seat": 8,
-   "x": 772.1,
-   "y": 396.0
+   "seat": 3,
+   "x": 931.9,
+   "y": 344.0
   },
   {
    "id": "arthur-naz-p0",
@@ -798,9 +798,9 @@
    "groupId": "tuvi-jenny",
    "category": "Friends",
    "table": "table-6",
-   "seat": 8,
-   "x": 787.0,
-   "y": 644.3
+   "seat": 9,
+   "x": 766.9,
+   "y": 600.2
   },
   {
    "id": "prush-nelanne-p0",
@@ -809,9 +809,9 @@
    "groupId": "prush-nelanne",
    "category": "Friends",
    "table": "table-6",
-   "seat": 9,
-   "x": 766.9,
-   "y": 600.2
+   "seat": 8,
+   "x": 787.0,
+   "y": 644.3
   },
   {
    "id": "tuvi-jenny-p1",
@@ -985,9 +985,9 @@
    "groupId": "nir-kinjia",
    "category": "Friends",
    "table": "table-8",
-   "seat": 1,
-   "x": 852.0,
-   "y": 723.0
+   "seat": 12,
+   "x": 809.0,
+   "y": 734.5
   },
   {
    "id": "yotam-rachel-p0",
@@ -996,9 +996,9 @@
    "groupId": "yotam-rachel",
    "category": "Friends",
    "table": "table-8",
-   "seat": 2,
-   "x": 895.0,
-   "y": 734.5
+   "seat": 3,
+   "x": 926.5,
+   "y": 766.0
   },
   {
    "id": "yotam-rachel-p1",
@@ -1007,9 +1007,9 @@
    "groupId": "yotam-rachel",
    "category": "Friends",
    "table": "table-8",
-   "seat": 3,
-   "x": 926.5,
-   "y": 766.0
+   "seat": 2,
+   "x": 895.0,
+   "y": 734.5
   },
   {
    "id": "vov-stef-p0",
@@ -1040,9 +1040,9 @@
    "groupId": "jamie-helena",
    "category": "Friends",
    "table": "table-8",
-   "seat": 6,
-   "x": 895.0,
-   "y": 883.5
+   "seat": 7,
+   "x": 852.0,
+   "y": 895.0
   },
   {
    "id": "melvin-p0",
@@ -1051,9 +1051,9 @@
    "groupId": "melvin",
    "category": "Friends",
    "table": "table-8",
-   "seat": 7,
-   "x": 852.0,
-   "y": 895.0
+   "seat": 8,
+   "x": 809.0,
+   "y": 883.5
   },
   {
    "id": "shahaf-caroline-p0",
@@ -1062,9 +1062,9 @@
    "groupId": "shahaf-caroline",
    "category": "Friends",
    "table": "table-8",
-   "seat": 8,
-   "x": 809.0,
-   "y": 883.5
+   "seat": 10,
+   "x": 766.0,
+   "y": 809.0
   },
   {
    "id": "shahaf-caroline-p1",
@@ -1084,9 +1084,9 @@
    "groupId": "nir-kinjia",
    "category": "Friends",
    "table": "table-8",
-   "seat": 10,
-   "x": 766.0,
-   "y": 809.0
+   "seat": 11,
+   "x": 777.5,
+   "y": 766.0
   },
   {
    "id": "ofek-p0",
@@ -1095,9 +1095,9 @@
    "groupId": "ofek",
    "category": "Friends",
    "table": "table-8",
-   "seat": 11,
-   "x": 777.5,
-   "y": 766.0
+   "seat": 1,
+   "x": 852.0,
+   "y": 723.0
   },
   {
    "id": "jamie-helena-p1",
@@ -1106,9 +1106,9 @@
    "groupId": "jamie-helena",
    "category": "Friends",
    "table": "table-8",
-   "seat": 12,
-   "x": 809.0,
-   "y": 734.5
+   "seat": 6,
+   "x": 895.0,
+   "y": 883.5
   },
   {
    "id": "alla-boris-p0",
@@ -1370,9 +1370,9 @@
    "groupId": "serena-jeremy",
    "category": "Friends",
    "table": "table-11",
-   "seat": 1,
-   "x": 852.0,
-   "y": 946.0
+   "seat": 2,
+   "x": 901.4,
+   "y": 962.0
   },
   {
    "id": "serena-jeremy-p1",
@@ -1381,9 +1381,9 @@
    "groupId": "serena-jeremy",
    "category": "Friends",
    "table": "table-11",
-   "seat": 2,
-   "x": 901.4,
-   "y": 962.0
+   "seat": 3,
+   "x": 931.9,
+   "y": 1004.0
   },
   {
    "id": "bonnie-ray-p0",
@@ -1392,9 +1392,9 @@
    "groupId": "bonnie-ray",
    "category": "Friends",
    "table": "table-11",
-   "seat": 3,
-   "x": 931.9,
-   "y": 1004.0
+   "seat": 5,
+   "x": 901.4,
+   "y": 1098.0
   },
   {
    "id": "bonnie-ray-p1",
@@ -1414,9 +1414,9 @@
    "groupId": "marcus-mel",
    "category": "Friends",
    "table": "table-11",
-   "seat": 5,
-   "x": 901.4,
-   "y": 1098.0
+   "seat": 9,
+   "x": 772.1,
+   "y": 1004.0
   },
   {
    "id": "marcus-mel-p1",
@@ -1425,9 +1425,9 @@
    "groupId": "marcus-mel",
    "category": "Friends",
    "table": "table-11",
-   "seat": 6,
-   "x": 852.0,
-   "y": 1114.0
+   "seat": 8,
+   "x": 772.1,
+   "y": 1056.0
   },
   {
    "id": "jenny-josh-p0",
@@ -1436,9 +1436,9 @@
    "groupId": "jenny-josh",
    "category": "Friends",
    "table": "table-11",
-   "seat": 7,
-   "x": 802.6,
-   "y": 1098.0
+   "seat": 1,
+   "x": 852.0,
+   "y": 946.0
   },
   {
    "id": "pete-caitlin-p0",
@@ -1447,9 +1447,9 @@
    "groupId": "pete-caitlin",
    "category": "Friends",
    "table": "table-11",
-   "seat": 8,
-   "x": 772.1,
-   "y": 1056.0
+   "seat": 7,
+   "x": 802.6,
+   "y": 1098.0
   },
   {
    "id": "pete-caitlin-p1",
@@ -1458,9 +1458,9 @@
    "groupId": "pete-caitlin",
    "category": "Friends",
    "table": "table-11",
-   "seat": 9,
-   "x": 772.1,
-   "y": 1004.0
+   "seat": 6,
+   "x": 852.0,
+   "y": 1114.0
   },
   {
    "id": "jenny-josh-p1",
@@ -1480,9 +1480,9 @@
    "groupId": "ed",
    "category": "Friends",
    "table": "table-12",
-   "seat": 1,
-   "x": 852.0,
-   "y": 1174.0
+   "seat": 14,
+   "x": 772.0,
+   "y": 1419.7
   },
   {
    "id": "eddy-david-p0",
@@ -1513,9 +1513,9 @@
    "groupId": "greg",
    "category": "Family Friends",
    "table": "table-12",
-   "seat": 4,
+   "seat": 7,
    "x": 932.0,
-   "y": 1274.0
+   "y": 1419.7
   },
   {
    "id": "isaac-p0",
@@ -1524,9 +1524,9 @@
    "groupId": "isaac",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 5,
-   "x": 932.0,
-   "y": 1322.6
+   "seat": 15,
+   "x": 772.0,
+   "y": 1371.1
   },
   {
    "id": "natalie-matt-p0",
@@ -1535,9 +1535,9 @@
    "groupId": "natalie-matt",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 6,
-   "x": 932.0,
-   "y": 1371.1
+   "seat": 17,
+   "x": 772.0,
+   "y": 1274.0
   },
   {
    "id": "natalie-matt-p1",
@@ -1546,24 +1546,13 @@
    "groupId": "natalie-matt",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 7,
-   "x": 932.0,
-   "y": 1419.7
+   "seat": 16,
+   "x": 772.0,
+   "y": 1322.6
   },
   {
    "id": "josh-lauren-p0",
    "name": "Lauren",
-   "group": "Josh, Lauren",
-   "groupId": "josh-lauren",
-   "category": "Friends",
-   "table": "table-12",
-   "seat": 8,
-   "x": 931.9,
-   "y": 1468.3
-  },
-  {
-   "id": "josh-lauren-p1",
-   "name": "Josh",
    "group": "Josh, Lauren",
    "groupId": "josh-lauren",
    "category": "Friends",
@@ -1573,19 +1562,19 @@
    "y": 1513.1
   },
   {
-   "id": "simon-kate-p0",
-   "name": "Simon",
-   "group": "Simon, Kate",
-   "groupId": "simon-kate",
+   "id": "josh-lauren-p1",
+   "name": "Josh",
+   "group": "Josh, Lauren",
+   "groupId": "josh-lauren",
    "category": "Friends",
    "table": "table-12",
-   "seat": 10,
-   "x": 875.9,
-   "y": 1540.3
+   "seat": 8,
+   "x": 931.9,
+   "y": 1468.3
   },
   {
-   "id": "simon-kate-p1",
-   "name": "Kate",
+   "id": "simon-kate-p0",
+   "name": "Simon",
    "group": "Simon, Kate",
    "groupId": "simon-kate",
    "category": "Friends",
@@ -1595,15 +1584,26 @@
    "y": 1540.3
   },
   {
+   "id": "simon-kate-p1",
+   "name": "Kate",
+   "group": "Simon, Kate",
+   "groupId": "simon-kate",
+   "category": "Friends",
+   "table": "table-12",
+   "seat": 10,
+   "x": 875.9,
+   "y": 1540.3
+  },
+  {
    "id": "michael-veronica-emma-p0",
    "name": "Veronica",
    "group": "Michael, Veronica, Emma",
    "groupId": "michael-veronica-emma",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 12,
-   "x": 788.8,
-   "y": 1513.1
+   "seat": 19,
+   "x": 806.4,
+   "y": 1188.3
   },
   {
    "id": "michael-veronica-emma-p1",
@@ -1612,9 +1612,9 @@
    "groupId": "michael-veronica-emma",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 13,
-   "x": 772.1,
-   "y": 1468.3
+   "seat": 18,
+   "x": 777.0,
+   "y": 1226.1
   },
   {
    "id": "michael-veronica-emma-p2",
@@ -1623,9 +1623,9 @@
    "groupId": "michael-veronica-emma",
    "category": "Cousins",
    "table": "table-12",
-   "seat": 14,
-   "x": 772.0,
-   "y": 1419.7
+   "seat": 1,
+   "x": 852.0,
+   "y": 1174.0
   },
   {
    "id": "freddy-liza-karin-p0",
@@ -1634,9 +1634,9 @@
    "groupId": "freddy-liza-karin",
    "category": "Family Friends",
    "table": "table-12",
-   "seat": 15,
-   "x": 772.0,
-   "y": 1371.1
+   "seat": 5,
+   "x": 932.0,
+   "y": 1322.6
   },
   {
    "id": "freddy-liza-karin-p1",
@@ -1645,9 +1645,9 @@
    "groupId": "freddy-liza-karin",
    "category": "Family Friends",
    "table": "table-12",
-   "seat": 16,
-   "x": 772.0,
-   "y": 1322.6
+   "seat": 6,
+   "x": 932.0,
+   "y": 1371.1
   },
   {
    "id": "freddy-liza-karin-p2",
@@ -1656,8 +1656,8 @@
    "groupId": "freddy-liza-karin",
    "category": "Family Friends",
    "table": "table-12",
-   "seat": 17,
-   "x": 772.0,
+   "seat": 4,
+   "x": 932.0,
    "y": 1274.0
   },
   {
@@ -1667,9 +1667,9 @@
    "groupId": "alon-shana",
    "category": "Friends",
    "table": "table-12",
-   "seat": 18,
-   "x": 777.0,
-   "y": 1226.1
+   "seat": 12,
+   "x": 788.8,
+   "y": 1513.1
   },
   {
    "id": "alon-shana-p1",
@@ -1678,9 +1678,9 @@
    "groupId": "alon-shana",
    "category": "Friends",
    "table": "table-12",
-   "seat": 19,
-   "x": 806.4,
-   "y": 1188.3
+   "seat": 13,
+   "x": 772.1,
+   "y": 1468.3
   }
  ]
 }
